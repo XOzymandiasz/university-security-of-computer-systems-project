@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"scs-project/internal/crypto"
 	"scs-project/internal/protocol"
 	"scs-project/internal/transport"
 )
@@ -20,9 +21,14 @@ func main() {
 		}
 	}(conn)
 
+	privateKey, err := rsa.GenerateKeyPair()
+	if err != nil {
+		return
+	}
+
 	msg := protocol.Message{
-		Type: "Ping",
-		Body: "Hello World",
+		Type: "REGISTER",
+		Body: privateKey,
 	}
 
 	encoded, _ := protocol.Encode(msg)
