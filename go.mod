@@ -1,3 +1,3 @@
-module scs-project
+module scs
 
 go 1.26.0
