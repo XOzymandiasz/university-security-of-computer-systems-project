@@ -1,1 +1,12 @@
 .idea
+pki/csr/*
+pki/issued/*
+pki/private/*
+pki/trust/*
+data/ttp/*
+data/client/*
+data/server/*
+*.key
+*.pem
+*.csr
+*.db
