@@ -4,14 +4,16 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"os"
+	"time"
 
-	"scs-project/internal/protocol"
-	"scs-project/internal/transport"
+	"scs/internal/protocol"
+	"scs/internal/transport"
 )
 
 func main() {
 	registerToTtp()
-	listener, err := net.Listen("tcp", ":9090")
+	listener, err := net.Listen("tcp", ":"+os.Getenv("PORT"))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -67,7 +69,24 @@ func handleConnection(conn net.Conn) {
 }
 
 func registerToTtp() {
-	conn, err := net.Dial("tcp", "localhost:8080")
+	ttpAddr := os.Getenv("TTP_ADDR")
+	if ttpAddr == "" {
+		ttpAddr = "localhost:8081"
+	}
+
+	var conn net.Conn
+	var err error
+
+	for i := 0; i < 15; i++ {
+		conn, err = net.Dial("tcp", ttpAddr)
+		if err == nil {
+			break
+		}
+
+		log.Printf("waiting for TTP at %s: %v", ttpAddr, err)
+		time.Sleep(2 * time.Second)
+	}
+
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -86,7 +105,7 @@ func registerToTtp() {
 	encoded, _ := protocol.Encode(msg)
 	err = transport.Send(conn, encoded)
 	if err != nil {
-		return
+		log.Fatal(err)
 	}
 
 	responseData, err := transport.Receive(conn)

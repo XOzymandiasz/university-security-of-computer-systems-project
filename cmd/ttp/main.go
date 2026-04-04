@@ -4,12 +4,14 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"scs-project/internal/protocol"
-	"scs-project/internal/transport"
+	"os"
+
+	"scs/internal/protocol"
+	"scs/internal/transport"
 )
 
 func main() {
-	listener, err := net.Listen("tcp", ":8080")
+	listener, err := net.Listen("tcp", ":"+os.Getenv("PORT"))
 	if err != nil {
 		log.Fatal(err)
 	}

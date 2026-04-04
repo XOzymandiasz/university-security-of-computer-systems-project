@@ -1,0 +1,10 @@
+.git
+.gitignore
+Dockerfile*
+deployments
+tmp
+bin
+dist
+coverage.out
+.idea
+.vscode
