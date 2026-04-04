@@ -4,17 +4,18 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"os"
 	"scs/internal/protocol"
 	"scs/internal/transport"
 )
 
 func main() {
-	conn, err := net.Dial("tcp", "localhost:8080")
+	conn, err := net.Dial("tcp", os.Getenv("SERVER_ADDR"))
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer func(conn net.Conn) {
-		err := conn.Close()
+		err = conn.Close()
 		if err != nil {
 			log.Fatal(err)
 		}
