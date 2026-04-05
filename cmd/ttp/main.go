@@ -53,15 +53,15 @@ func handleConnection(conn net.Conn) {
 	fmt.Println("Received:", msg.Type)
 
 	if msg.Type == "Ping" {
-		response := protocol.Message{
-			Type: "Pong",
-			Body: "Cert",
-		}
+		//response := protocol.Message{
+		//	Type: "Pong",
+		//	Body: "Cert",
+		//}
 
-		encoded, _ := protocol.Encode(response)
-		err := transport.Send(conn, encoded)
-		if err != nil {
-			return
-		}
+		//encoded, _ := protocol.Encode(response)
+		//err := transport.Send(conn, encoded)
+		//if err != nil {
+		//	return
+		//}
 	}
 }

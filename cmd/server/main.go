@@ -5,20 +5,24 @@ import (
 	"log"
 	"net"
 	"os"
-	"time"
+	"scs/internal/ttp"
 
+	"scs/internal/identity"
 	"scs/internal/protocol"
 	"scs/internal/transport"
 )
 
+const baseDir = "/tmp/scs/server"
+
 func main() {
+	identity.EnsureIdentity(baseDir)
 	registerToTtp()
 	listener, err := net.Listen("tcp", ":"+os.Getenv("PORT"))
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer func(listener net.Listener) {
-		err := listener.Close()
+		err = listener.Close()
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -55,64 +59,29 @@ func handleConnection(conn net.Conn) {
 	fmt.Println("Received:", msg.Type)
 
 	if msg.Type == "Ping" {
-		response := protocol.Message{
-			Type: "Pong",
-			Body: "Hello from server",
-		}
+		//response := protocol.Message{
+		//	Type: "Pong",
+		//	Body: ,
+		//}
 
-		encoded, _ := protocol.Encode(response)
-		err := transport.Send(conn, encoded)
-		if err != nil {
-			return
-		}
+		//encoded, _ := protocol.Encode(response)
+		//err := transport.Send(conn, encoded)
+		//if err != nil {
+		return
+		//}
 	}
 }
 
 func registerToTtp() {
-	ttpAddr := os.Getenv("TTP_ADDR")
-	if ttpAddr == "" {
-		ttpAddr = "localhost:8081"
+	data := identity.LoadRegistrationData(baseDir)
+
+	addr := os.Getenv("TTP_ADDR")
+	if addr == "" {
+		addr = "localhost:8081"
 	}
 
-	var conn net.Conn
-	var err error
-
-	for i := 0; i < 15; i++ {
-		conn, err = net.Dial("tcp", ttpAddr)
-		if err == nil {
-			break
-		}
-
-		log.Printf("waiting for TTP at %s: %v", ttpAddr, err)
-		time.Sleep(2 * time.Second)
-	}
-
+	err := ttp.Register(addr, data)
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer func(conn net.Conn) {
-		err := conn.Close()
-		if err != nil {
-			log.Fatal(err)
-		}
-	}(conn)
-
-	msg := protocol.Message{
-		Type: "Ping",
-		Body: "Server's key",
-	}
-
-	encoded, _ := protocol.Encode(msg)
-	err = transport.Send(conn, encoded)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	responseData, err := transport.Receive(conn)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	response, _ := protocol.Decode(responseData)
-	fmt.Println(response.Body)
 }
