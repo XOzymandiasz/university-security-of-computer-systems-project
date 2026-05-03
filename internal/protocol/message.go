@@ -3,8 +3,8 @@ package protocol
 import "encoding/json"
 
 type Message struct {
-	Type string           `json:"type"`
-	Body RegistrationData `json:"body"`
+	Type string `json:"type"`
+	Body any    `json:"body"`
 }
 
 func Encode(msg Message) ([]byte, error) {
