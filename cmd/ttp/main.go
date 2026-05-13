@@ -5,10 +5,13 @@ import (
 	"log"
 	"net"
 	"os"
+	"scs/internal/identity"
 
 	"scs/internal/protocol"
 	"scs/internal/transport"
 )
+
+const baseDir = "/tmp/scs/ttp/"
 
 func main() {
 	listener, err := net.Listen("tcp", ":"+os.Getenv("PORT"))
@@ -50,18 +53,22 @@ func handleConnection(conn net.Conn) {
 	}
 
 	msg, _ := protocol.Decode(data)
-	fmt.Println("Received:", msg.Type)
 
-	if msg.Type == "Ping" {
-		//response := protocol.Message{
-		//	Type: "Pong",
-		//	Body: "Cert",
-		//}
+	if msg.Type == "TTP_INIT" {
+		response := protocol.Message{
+			Type: "TTP_INIT",
+			Body: identity.LoadRegistrationData(baseDir),
+		}
 
-		//encoded, _ := protocol.Encode(response)
-		//err := transport.Send(conn, encoded)
-		//if err != nil {
-		//	return
-		//}
+		encoded, err := protocol.Encode(response)
+		if err != nil {
+			log.Println(err)
+			return
+		}
+		err = transport.Send(conn, encoded)
+		if err != nil {
+			log.Println(err)
+			return
+		}
 	}
 }

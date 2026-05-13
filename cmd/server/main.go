@@ -12,7 +12,7 @@ import (
 	"scs/internal/transport"
 )
 
-const baseDir = "/tmp/scs/server"
+const baseDir = "/tmp/scs/server/"
 
 func main() {
 	identity.EnsureIdentity(baseDir)
@@ -70,6 +70,19 @@ func handleConnection(conn net.Conn) {
 		return
 		//}
 	}
+}
+
+func initToTtp() any {
+	addr := os.Getenv("TTP_ADDR")
+	if addr == "" {
+		addr = "localhost:8081"
+	}
+
+	ttpPublicKey, err := ttp.Init(addr)
+	if err == nil {
+		return nil
+	}
+	return ttpPublicKey
 }
 
 func registerToTtp() {

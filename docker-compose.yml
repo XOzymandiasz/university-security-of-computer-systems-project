@@ -13,20 +13,20 @@ services:
     networks:
       - scs-net
 
-  server:
-    build:
-      context: .
-      dockerfile: deployments/server/Dockerfile
-    container_name: scs-server
-    ports:
-      - "8080:8080"
-    environment:
-      PORT: 8080
-      TTP_ADDR: ttp:8081
-    networks:
-      - scs-net
-    depends_on:
-      - ttp
+  #server:
+  #  build:
+  #    context: .
+  #    dockerfile: deployments/server/Dockerfile
+  #  container_name: scs-server
+  #  ports:
+  #    - "8080:8080"
+  #  environment:
+  #    PORT: 8080
+  #    TTP_ADDR: ttp:8081
+  #  networks:
+  #    - scs-net
+  #  depends_on:
+  #    - ttp
 
   client:
     build:
@@ -40,7 +40,7 @@ services:
       - scs-net
     depends_on:
       - ttp
-      - server
+      #- server
 
 networks:
   scs-net:

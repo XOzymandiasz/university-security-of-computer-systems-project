@@ -8,12 +8,43 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"log"
 	"os"
 
 	"scs/internal/protocol"
 )
+
+func ParsePublicKeyFromPEM(pemBytes []byte) (*rsa.PublicKey, error) {
+	block, _ := pem.Decode(pemBytes)
+	if block == nil {
+		return nil, errors.New("failed to decode PEM block")
+	}
+
+	key, err := x509.ParsePKIXPublicKey(block.Bytes)
+	if err != nil {
+		return nil, err
+	}
+
+	pub, ok := key.(*rsa.PublicKey)
+	if !ok {
+		return nil, errors.New("no RSA public key")
+	}
+
+	return pub, nil
+}
+
+func EncryptWithPublicKeyBase64(data []byte, pub *rsa.PublicKey) (string, error) {
+	hash := sha256.New()
+
+	ciphertext, err := rsa.EncryptOAEP(hash, rand.Reader, pub, data, nil)
+	if err != nil {
+		return "", err
+	}
+
+	return base64.StdEncoding.EncodeToString(ciphertext), nil
+}
 
 func LoadRegistrationData(baseDir string) protocol.RegistrationData {
 	idBytes, err := os.ReadFile(baseDir + "/id.txt")
@@ -65,7 +96,7 @@ func EnsureIdentity(baseDir string) {
 	ensureKey(baseDir + "/enc.key")
 	ensureId(baseDir + "/id.txt")
 
-	fmt.Println("Server identity ready")
+	fmt.Println("Identity ready")
 }
 
 func ensureKey(path string) {
@@ -103,7 +134,7 @@ func ensureKey(path string) {
 
 func ensureId(path string) {
 	_, err := os.Stat(path)
-	if err == nil {
+	if err != nil {
 		return
 	}
 	if !os.IsNotExist(err) {
