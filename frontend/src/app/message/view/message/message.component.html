@@ -1,0 +1,22 @@
+<div class="message-card">
+  <div class="message-header">
+    <h2>Message</h2>
+    <p>Click the button to fetch a message.</p>
+  </div>
+
+  <div class="message-content">
+    @if (loading) {
+    <p class="message-empty">Loading...</p>
+    } @else if (error) {
+    <p class="message-error">{{ error }}</p>
+    } @else if (message) {
+    <p class="message-text">{{ message.text }}</p>
+    } @else {
+    <p class="message-empty">No message yet.</p>
+    }
+  </div>
+
+  <button class="message-button" type="button" (click)="getMessage()">
+    Get message
+  </button>
+</div>
