@@ -37,6 +37,9 @@ services:
     environment:
       SERVER_ADDR: server:8080
       TTP_ADDR: ttp:8081
+      PORT: 8082
+    ports:
+      - "8082:8082"
     networks:
       - scs-net
     depends_on:
