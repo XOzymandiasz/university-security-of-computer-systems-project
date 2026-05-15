@@ -5,34 +5,81 @@ import (
 	"crypto/rsa"
 	"crypto/sha256"
 	"crypto/x509"
+	"crypto/x509/pkix"
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/pem"
 	"errors"
 	"fmt"
 	"log"
+	"math/big"
 	"os"
+	"time"
 
 	"scs/internal/protocol"
 )
 
-func ParsePublicKeyFromPEM(pemBytes []byte) (*rsa.PublicKey, error) {
-	block, _ := pem.Decode(pemBytes)
-	if block == nil {
-		return nil, errors.New("failed to decode PEM block")
-	}
+func CreateCertificateBase64(
+	subjectID string,
+	subjectPublicKey *rsa.PublicKey,
+	issuerPrivateKey *rsa.PrivateKey,
+) (string, error) {
+	serialLimit := new(big.Int).Lsh(big.NewInt(1), 128)
 
-	key, err := x509.ParsePKIXPublicKey(block.Bytes)
+	serialNumber, err := rand.Int(rand.Reader, serialLimit)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
-	pub, ok := key.(*rsa.PublicKey)
-	if !ok {
-		return nil, errors.New("no RSA public key")
+	template := x509.Certificate{
+		SerialNumber: serialNumber,
+
+		Subject: pkix.Name{
+			CommonName: subjectID,
+		},
+
+		NotBefore: time.Now(),
+		NotAfter:  time.Now().Add(365 * 24 * time.Hour),
+
+		KeyUsage: x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment,
+
+		ExtKeyUsage: []x509.ExtKeyUsage{
+			x509.ExtKeyUsageClientAuth,
+			x509.ExtKeyUsageServerAuth,
+		},
+
+		BasicConstraintsValid: true,
+		IsCA:                  false,
 	}
 
-	return pub, nil
+	issuerTemplate := x509.Certificate{
+		SerialNumber: big.NewInt(1),
+
+		Subject: pkix.Name{
+			CommonName: "SCS TTP",
+		},
+
+		NotBefore: time.Now(),
+		NotAfter:  time.Now().Add(10 * 365 * 24 * time.Hour),
+
+		KeyUsage: x509.KeyUsageCertSign | x509.KeyUsageDigitalSignature,
+
+		BasicConstraintsValid: true,
+		IsCA:                  true,
+	}
+
+	certDER, err := x509.CreateCertificate(
+		rand.Reader,
+		&template,
+		&issuerTemplate,
+		subjectPublicKey,
+		issuerPrivateKey,
+	)
+	if err != nil {
+		return "", err
+	}
+
+	return base64.StdEncoding.EncodeToString(certDER), nil
 }
 
 func EncryptWithPublicKeyBase64(data []byte, pub *rsa.PublicKey) (string, error) {
@@ -46,14 +93,48 @@ func EncryptWithPublicKeyBase64(data []byte, pub *rsa.PublicKey) (string, error)
 	return base64.StdEncoding.EncodeToString(ciphertext), nil
 }
 
+func DecryptWithPrivateKeyBase64(encoded string, privateKey *rsa.PrivateKey) ([]byte, error) {
+	ciphertext, err := base64.StdEncoding.DecodeString(encoded)
+	if err != nil {
+		return nil, err
+	}
+
+	hash := sha256.New()
+
+	plaintext, err := rsa.DecryptOAEP(hash, rand.Reader, privateKey, ciphertext, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return plaintext, nil
+}
+
+func ParsePublicKeyFromBase64(encoded string) (*rsa.PublicKey, error) {
+	keyBytes, err := base64.StdEncoding.DecodeString(encoded)
+	if err != nil {
+		return nil, err
+	}
+
+	key, err := x509.ParsePKIXPublicKey(keyBytes)
+	if err != nil {
+		return nil, err
+	}
+
+	pub, ok := key.(*rsa.PublicKey)
+	if !ok {
+		return nil, errors.New("no RSA public key")
+	}
+
+	return pub, nil
+}
+
 func LoadRegistrationData(baseDir string) protocol.RegistrationData {
-	idBytes, err := os.ReadFile(baseDir + "/id.txt")
+	idBytes, err := os.ReadFile(baseDir + "id.txt")
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	authPub := loadPublicKeyBase64(baseDir + "/auth.key")
-	encPub := loadPublicKeyBase64(baseDir + "/enc.key")
+	authPub := loadPublicKeyBase64(baseDir + "auth.key")
+	encPub := loadPublicKeyBase64(baseDir + "enc.key")
 
 	return protocol.RegistrationData{
 		ID:            string(idBytes),
@@ -62,8 +143,27 @@ func LoadRegistrationData(baseDir string) protocol.RegistrationData {
 	}
 }
 
-func loadPublicKeyBase64(privateKeyPath string) string {
-	keyPEM, err := os.ReadFile(privateKeyPath)
+func LoadPrivateKey(path string) (*rsa.PrivateKey, error) {
+	keyPEM, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+
+	block, _ := pem.Decode(keyPEM)
+	if block == nil {
+		return nil, errors.New("failed to decode PEM")
+	}
+
+	privateKey, err := x509.ParsePKCS1PrivateKey(block.Bytes)
+	if err != nil {
+		return nil, err
+	}
+
+	return privateKey, nil
+}
+
+func loadPublicKeyBase64(path string) string {
+	keyPEM, err := os.ReadFile(path)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -78,12 +178,12 @@ func loadPublicKeyBase64(privateKeyPath string) string {
 		log.Fatal(err)
 	}
 
-	publicKeyBytes, err := x509.MarshalPKIXPublicKey(&privateKey.PublicKey)
+	publicKey, err := x509.MarshalPKIXPublicKey(&privateKey.PublicKey)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	return base64.StdEncoding.EncodeToString(publicKeyBytes)
+	return base64.StdEncoding.EncodeToString(publicKey)
 }
 
 func EnsureIdentity(baseDir string) {
@@ -92,9 +192,9 @@ func EnsureIdentity(baseDir string) {
 		log.Fatal(err)
 	}
 
-	ensureKey(baseDir + "/auth.key")
-	ensureKey(baseDir + "/enc.key")
-	ensureId(baseDir + "/id.txt")
+	ensureKey(baseDir + "auth.key")
+	ensureKey(baseDir + "enc.key")
+	ensureId(baseDir + "id.txt")
 
 	fmt.Println("Identity ready")
 }
@@ -134,7 +234,7 @@ func ensureKey(path string) {
 
 func ensureId(path string) {
 	_, err := os.Stat(path)
-	if err != nil {
+	if err == nil {
 		return
 	}
 	if !os.IsNotExist(err) {
