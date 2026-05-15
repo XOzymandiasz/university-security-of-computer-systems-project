@@ -1,6 +1,6 @@
 {
   "/api": {
-    "target": "http://client:8080",
+    "target": "http://client:8082",
     "secure": false,
     "changeOrigin": true,
     "logLevel": "debug"
