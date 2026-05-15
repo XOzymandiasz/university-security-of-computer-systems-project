@@ -4,50 +4,10 @@ import (
 	"crypto/rsa"
 	"fmt"
 	"net"
+	"scs/internal/identity"
 	"scs/internal/protocol"
 	"scs/internal/transport"
 )
-
-func Register(addr string, data protocol.RegistrationData) error {
-	conn, err := net.Dial("tcp", addr)
-	if err != nil {
-		return err
-	}
-	defer func(conn net.Conn) {
-		err = conn.Close()
-		if err != nil {
-
-		}
-	}(conn)
-
-	msg := protocol.Message{
-		Type: "Register",
-		Body: data,
-	}
-
-	encoded, err := protocol.Encode(msg)
-	if err != nil {
-		return err
-	}
-
-	err = transport.Send(conn, encoded)
-	if err != nil {
-		return err
-	}
-
-	responseData, err := transport.Receive(conn)
-	if err != nil {
-		return err
-	}
-
-	response, err := protocol.Decode(responseData)
-	if err != nil {
-		return err
-	}
-
-	fmt.Println(response.Body)
-	return nil
-}
 
 func Init(addr string) (*rsa.PublicKey, error) {
 	conn, err := net.Dial("tcp", addr)
@@ -89,10 +49,56 @@ func Init(addr string) (*rsa.PublicKey, error) {
 		return nil, fmt.Errorf("unexpected response type: %s", response.Type)
 	}
 
-	key, ok := response.Body.(*rsa.PublicKey)
+	keyBase64, ok := response.Body.(string)
 	if !ok {
 		return nil, fmt.Errorf("invalid body type: %T", response.Body)
 	}
 
+	key, err := identity.ParsePublicKeyFromBase64(keyBase64)
+	if err != nil {
+		return nil, err
+	}
+
 	return key, nil
+}
+
+func Register(addr string, data protocol.RegistrationData) error {
+	conn, err := net.Dial("tcp", addr)
+	if err != nil {
+		return err
+	}
+	defer func(conn net.Conn) {
+		err = conn.Close()
+		if err != nil {
+
+		}
+	}(conn)
+
+	msg := protocol.Message{
+		Type: "REGISTER",
+		Body: data,
+	}
+
+	encoded, err := protocol.Encode(msg)
+	if err != nil {
+		return err
+	}
+
+	err = transport.Send(conn, encoded)
+	if err != nil {
+		return err
+	}
+
+	responseData, err := transport.Receive(conn)
+	if err != nil {
+		return err
+	}
+
+	response, err := protocol.Decode(responseData)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println(response.Body)
+	return nil
 }
