@@ -1,3 +1,3 @@
 export interface MessageModel {
-  text: string;
+  body: string;
 }
