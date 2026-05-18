@@ -68,7 +68,8 @@ func CreateCertificateBase64(
 		IsCA:                  true,
 	}
 
-	certDER, err := x509.CreateCertificate(
+	var certDER []byte
+	certDER, err = x509.CreateCertificate(
 		rand.Reader,
 		&template,
 		&issuerTemplate,
@@ -101,7 +102,8 @@ func DecryptWithPrivateKeyBase64(encoded string, privateKey *rsa.PrivateKey) ([]
 
 	hash := sha256.New()
 
-	plaintext, err := rsa.DecryptOAEP(hash, rand.Reader, privateKey, ciphertext, nil)
+	var plaintext []byte
+	plaintext, err = rsa.DecryptOAEP(hash, rand.Reader, privateKey, ciphertext, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -115,7 +117,8 @@ func ParsePublicKeyFromBase64(encoded string) (*rsa.PublicKey, error) {
 		return nil, err
 	}
 
-	key, err := x509.ParsePKIXPublicKey(keyBytes)
+	var key any
+	key, err = x509.ParsePKIXPublicKey(keyBytes)
 	if err != nil {
 		return nil, err
 	}
@@ -154,7 +157,8 @@ func LoadPrivateKey(path string) (*rsa.PrivateKey, error) {
 		return nil, errors.New("failed to decode PEM")
 	}
 
-	privateKey, err := x509.ParsePKCS1PrivateKey(block.Bytes)
+	var privateKey *rsa.PrivateKey
+	privateKey, err = x509.ParsePKCS1PrivateKey(block.Bytes)
 	if err != nil {
 		return nil, err
 	}
@@ -173,12 +177,14 @@ func loadPublicKeyBase64(path string) string {
 		log.Fatal("failed to decode PEM")
 	}
 
-	privateKey, err := x509.ParsePKCS1PrivateKey(block.Bytes)
+	var privateKey *rsa.PrivateKey
+	privateKey, err = x509.ParsePKCS1PrivateKey(block.Bytes)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	publicKey, err := x509.MarshalPKIXPublicKey(&privateKey.PublicKey)
+	var publicKey []byte
+	publicKey, err = x509.MarshalPKIXPublicKey(&privateKey.PublicKey)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -208,14 +214,16 @@ func ensureKey(path string) {
 		log.Fatal(err)
 	}
 
-	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	var privateKey *rsa.PrivateKey
+	privateKey, err = rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
 		log.Fatal(err)
 	}
 	keyBytes := x509.MarshalPKCS1PrivateKey(privateKey)
 
 	pemBlock := &pem.Block{Type: "RSA PRIVATE KEY", Bytes: keyBytes}
-	file, err := os.Create(path)
+	var file *os.File
+	file, err = os.Create(path)
 	if err != nil {
 		log.Fatal(err)
 	}

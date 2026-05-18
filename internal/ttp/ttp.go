@@ -26,7 +26,8 @@ func Init(addr string) (*rsa.PublicKey, error) {
 		Body: nil,
 	}
 
-	encoded, err := protocol.Encode(msg)
+	var encoded []byte
+	encoded, err = protocol.Encode(msg)
 	if err != nil {
 		return nil, err
 	}
@@ -35,12 +36,14 @@ func Init(addr string) (*rsa.PublicKey, error) {
 		return nil, err
 	}
 
-	responseData, err := transport.Receive(conn)
+	var responseData []byte
+	responseData, err = transport.Receive(conn)
 	if err != nil {
 		return nil, err
 	}
 
-	response, err := protocol.Decode(responseData)
+	var response protocol.Message
+	response, err = protocol.Decode(responseData)
 	if err != nil {
 		return nil, err
 	}
@@ -54,7 +57,8 @@ func Init(addr string) (*rsa.PublicKey, error) {
 		return nil, fmt.Errorf("invalid body type: %T", response.Body)
 	}
 
-	key, err := identity.ParsePublicKeyFromBase64(keyBase64)
+	var key *rsa.PublicKey
+	key, err = identity.ParsePublicKeyFromBase64(keyBase64)
 	if err != nil {
 		return nil, err
 	}
@@ -79,7 +83,8 @@ func Register(addr string, data protocol.RegistrationData) error {
 		Body: data,
 	}
 
-	encoded, err := protocol.Encode(msg)
+	var encoded []byte
+	encoded, err = protocol.Encode(msg)
 	if err != nil {
 		return err
 	}
@@ -89,16 +94,16 @@ func Register(addr string, data protocol.RegistrationData) error {
 		return err
 	}
 
-	responseData, err := transport.Receive(conn)
+	var responseData []byte
+	responseData, err = transport.Receive(conn)
 	if err != nil {
 		return err
 	}
 
-	response, err := protocol.Decode(responseData)
+	_, err = protocol.Decode(responseData)
 	if err != nil {
 		return err
 	}
 
-	fmt.Println(response.Body)
 	return nil
 }

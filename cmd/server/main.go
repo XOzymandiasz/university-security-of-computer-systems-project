@@ -35,12 +35,18 @@ func startApi() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer listener.Close()
+	defer func(listener net.Listener) {
+		err = listener.Close()
+		if err != nil {
+
+		}
+	}(listener)
 
 	fmt.Println("server TCP listening on", addr)
 
 	for {
-		conn, err := listener.Accept()
+		var conn net.Conn
+		conn, err = listener.Accept()
 		if err != nil {
 			log.Println(err)
 			continue
@@ -51,16 +57,21 @@ func startApi() {
 }
 
 func handleConnection(conn net.Conn) {
-	log.Println("HTTP /api/message hit:")
-	defer conn.Close()
+	defer func(conn net.Conn) {
+		err := conn.Close()
+		if err != nil {
 
-	data, err := transport.Receive(conn)
+		}
+	}(conn)
+	var err error
+	var data []byte
+	data, err = transport.Receive(conn)
 	if err != nil {
 		log.Println(err)
 		return
 	}
-
-	msg, err := protocol.Decode(data)
+	var msg protocol.Message
+	msg, err = protocol.Decode(data)
 	if err != nil {
 		sendError(conn, err)
 		return
@@ -86,8 +97,8 @@ func handleReadMessage(conn net.Conn) {
 		Type: "MESSAGE",
 		Body: message,
 	}
-
-	encoded, err := protocol.Encode(response)
+	var encoded []byte
+	encoded, err = protocol.Encode(response)
 	if err != nil {
 		log.Println(err)
 		return
@@ -99,7 +110,7 @@ func handleReadMessage(conn net.Conn) {
 }
 
 func readMessage() (string, error) {
-	data, err := os.ReadFile("/app/cmd/server/message.txt")
+	data, err := os.ReadFile("/app/message")
 	if err != nil {
 		return "", fmt.Errorf("read message file: %w", err)
 	}

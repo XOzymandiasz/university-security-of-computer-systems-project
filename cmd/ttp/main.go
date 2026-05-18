@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/rsa"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -94,34 +95,38 @@ func handleRegister(conn net.Conn, msg protocol.Message) {
 		sendError(conn, err)
 		return
 	}
-
-	ttpEncPrivateKey, err := identity.LoadPrivateKey(baseDir + "enc.key")
+	var ttpEncPrivateKey *rsa.PrivateKey
+	ttpEncPrivateKey, err = identity.LoadPrivateKey(baseDir + "enc.key")
 	if err != nil {
 		sendError(conn, err)
 		return
 	}
 
-	decryptedIDBytes, err := identity.DecryptWithPrivateKeyBase64(reg.ID, ttpEncPrivateKey)
+	var decryptedIDBytes []byte
+	decryptedIDBytes, err = identity.DecryptWithPrivateKeyBase64(reg.ID, ttpEncPrivateKey)
 	if err != nil {
 		sendError(conn, err)
 		return
 	}
 
 	decryptedID := string(decryptedIDBytes)
-
-	userAuthPublicKey, err := identity.ParsePublicKeyFromBase64(reg.AuthPublicKey)
+	var userAuthPublicKey *rsa.PublicKey
+	userAuthPublicKey, err = identity.ParsePublicKeyFromBase64(reg.AuthPublicKey)
 	if err != nil {
 		sendError(conn, err)
 		return
 	}
 
-	ttpAuthPrivateKey, err := identity.LoadPrivateKey(baseDir + "auth.key")
+	var ttpAuthPrivateKey *rsa.PrivateKey
+	ttpAuthPrivateKey, err = identity.LoadPrivateKey(baseDir + "auth.key")
+
 	if err != nil {
 		sendError(conn, err)
 		return
 	}
 
-	certificateBase64, err := identity.CreateCertificateBase64(
+	var certificateBase64 string
+	certificateBase64, err = identity.CreateCertificateBase64(
 		decryptedID,
 		userAuthPublicKey,
 		ttpAuthPrivateKey,
@@ -136,7 +141,8 @@ func handleRegister(conn net.Conn, msg protocol.Message) {
 		Body: certificateBase64,
 	}
 
-	encoded, err := protocol.Encode(response)
+	var encoded []byte
+	encoded, err = protocol.Encode(response)
 	if err != nil {
 		log.Println(err)
 		return

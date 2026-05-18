@@ -50,10 +50,6 @@ func handleHealth(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-type MessageRequest struct {
-	Body string `json:"body"`
-}
-
 type MessageResponse struct {
 	Body any `json:"body"`
 }
@@ -97,14 +93,20 @@ func sendToServer() (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer conn.Close()
+	defer func(conn net.Conn) {
+		err = conn.Close()
+		if err != nil {
+
+		}
+	}(conn)
 
 	msg := protocol.Message{
 		Type: "READ_MESSAGE",
 		Body: nil,
 	}
 
-	encoded, err := protocol.Encode(msg)
+	var encoded []byte
+	encoded, err = protocol.Encode(msg)
 	if err != nil {
 		return nil, err
 	}
@@ -113,12 +115,14 @@ func sendToServer() (any, error) {
 		return nil, err
 	}
 
-	responseData, err := transport.Receive(conn)
+	var responseData []byte
+	responseData, err = transport.Receive(conn)
 	if err != nil {
 		return nil, err
 	}
 
-	response, err := protocol.Decode(responseData)
+	var response protocol.Message
+	response, err = protocol.Decode(responseData)
 	if err != nil {
 		return nil, err
 	}
