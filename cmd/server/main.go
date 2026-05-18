@@ -8,7 +8,7 @@ import (
 	"os"
 	"scs/internal/protocol"
 	"scs/internal/transport"
-	"scs/internal/ttp"
+	ttpClient "scs/internal/ttpClient"
 
 	"scs/internal/identity"
 )
@@ -16,12 +16,24 @@ import (
 const baseDir = "/tmp/scs/server/"
 
 func main() {
-	ttpPublicKey := initToTtp()
+	addr, err := ttpClient.AddrFromEnv("TTP_ADDR")
+	if err != nil {
+		log.Fatalln(err)
+	}
+	var ttpPublicKey *rsa.PublicKey
+	ttpPublicKey, err = ttpClient.Init(addr)
+	if err != nil {
+		log.Fatalln(err)
+	}
 
 	identity.EnsureIdentity(baseDir)
 	data := identity.LoadRegistrationData(baseDir)
 
-	registerToTtp(ttpPublicKey, data)
+	//var certificateBase64 string
+	_, err = ttpClient.Register(addr, ttpPublicKey, data)
+	if err != nil {
+		log.Fatalln(err)
+	}
 
 	startApi()
 }
@@ -137,46 +149,5 @@ func sendError(conn net.Conn, err error) {
 
 	if sendErr := transport.Send(conn, encoded); sendErr != nil {
 		log.Println(sendErr)
-	}
-}
-
-func initToTtp() *rsa.PublicKey {
-	addr := os.Getenv("TTP_ADDR")
-	if addr == "" {
-		log.Fatal("TTP_ADDR env variable not set")
-	}
-
-	ttpPublicKey, err := ttp.Init(addr)
-	if err != nil {
-		return nil
-	}
-
-	if ttpPublicKey == nil {
-		log.Fatal("TTP public key is nil")
-	}
-
-	return ttpPublicKey
-}
-
-func registerToTtp(ttpPublicKey *rsa.PublicKey, data protocol.RegistrationData) {
-	if ttpPublicKey == nil {
-		log.Fatal("cannot register to TTP: public key is nil")
-	}
-
-	encryptedID, err := identity.EncryptWithPublicKeyBase64([]byte(data.ID), ttpPublicKey)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	data.ID = encryptedID
-
-	addr := os.Getenv("TTP_ADDR")
-	if addr == "" {
-		log.Fatal("TTP_ADDR env variable not set")
-	}
-
-	err = ttp.Register(addr, data)
-	if err != nil {
-		log.Fatal(err)
 	}
 }
