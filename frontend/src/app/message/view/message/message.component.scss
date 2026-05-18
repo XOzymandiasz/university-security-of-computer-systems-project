@@ -1,0 +1,88 @@
+$message-bg: #272822;
+$message-bg-dark: #1e1f1c;
+$message-border: #3e3d32;
+$message-border-light: #49483e;
+
+$text-main: #f8f8f2;
+$text-white: #ffffff;
+$text-muted: #75715e;
+$text-accent: #a6e22e;
+
+$button-bg: #fd5ff0;
+$button-hover-bg: #f8b6f2;
+
+.message-card {
+  width: min(480px, calc(100vw - 32px));
+  padding: 24px;
+  border-radius: 18px;
+  background: $message-bg;
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.45);
+  font-family: Arial, sans-serif;
+  border: 1px solid $message-border;
+}
+
+.message-header {
+  h2 {
+    margin: 0;
+    font-size: 28px;
+    color: $text-white;
+  }
+
+  p {
+    margin: 8px 0 0;
+    color: $text-accent;
+    font-size: 14px;
+  }
+}
+
+.message-content {
+  margin-top: 24px;
+  min-height: 72px;
+  padding: 16px;
+  border-radius: 12px;
+  background: $message-bg-dark;
+  border: 1px solid $message-border-light;
+}
+
+.message-text {
+  margin: 0;
+  color: $text-main;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.message-empty {
+  margin: 0;
+  color: $text-muted;
+  font-size: 15px;
+  font-style: italic;
+}
+
+.message-button {
+  width: 100%;
+  margin-top: 20px;
+  padding: 12px 16px;
+  border: none;
+  border-radius: 12px;
+  background: $button-bg;
+  color: $text-main;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+  box-shadow: 0 6px 18px rgba(249, 38, 114, 0.35);
+
+  &:hover {
+    background: $button-hover-bg;
+    transform: translateY(-1px);
+    box-shadow: 0 8px 22px rgba(253, 95, 240, 0.35);
+  }
+
+  &:active {
+    transform: translateY(0);
+    box-shadow: 0 4px 12px rgba(249, 38, 114, 0.25);
+  }
+}

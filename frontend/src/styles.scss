@@ -1,0 +1,60 @@
+$color-text: #f8f8f2;
+$font-main: Arial, sans-serif;
+
+$bg-dark-1: #151612;
+$bg-dark-2: #1f201b;
+$bg-dark-3: #272822;
+$bg-dark-4: #20211c;
+$bg-dark-5: #141511;
+
+html,
+body {
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  background:
+    radial-gradient(
+      circle at 12% 18%,
+      rgba(166, 226, 46, 0.16) 0%,
+      rgba(166, 226, 46, 0.08) 18%,
+      transparent 38%
+    ),
+    radial-gradient(
+      circle at 85% 22%,
+      rgba(102, 217, 239, 0.14) 0%,
+      rgba(102, 217, 239, 0.07) 20%,
+      transparent 42%
+    ),
+    radial-gradient(
+      circle at 75% 82%,
+      rgba(249, 38, 114, 0.16) 0%,
+      rgba(249, 38, 114, 0.08) 22%,
+      transparent 45%
+    ),
+    radial-gradient(
+      circle at 18% 88%,
+      rgba(253, 151, 31, 0.12) 0%,
+      rgba(253, 151, 31, 0.06) 20%,
+      transparent 42%
+    ),
+    linear-gradient(
+      135deg,
+      $bg-dark-1 0%,
+      $bg-dark-2 28%,
+      $bg-dark-3 52%,
+      $bg-dark-4 74%,
+      $bg-dark-5 100%
+    );
+
+  background-attachment: fixed;
+
+  color: $color-text;
+  font-family: $font-main;
+}
