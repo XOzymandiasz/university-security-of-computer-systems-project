@@ -18,8 +18,11 @@ const baseDir = "/tmp/scs/client/"
 
 func main() {
 	ttpPublicKey := initToTtp()
+
 	identity.EnsureIdentity(baseDir)
-	registerToTtp(ttpPublicKey)
+	data := identity.LoadRegistrationData(baseDir)
+
+	registerToTtp(ttpPublicKey, data)
 
 	startApi()
 }
@@ -156,11 +159,10 @@ func initToTtp() *rsa.PublicKey {
 	return ttpPublicKey
 }
 
-func registerToTtp(ttpPublicKey *rsa.PublicKey) {
+func registerToTtp(ttpPublicKey *rsa.PublicKey, data protocol.RegistrationData) {
 	if ttpPublicKey == nil {
 		log.Fatal("cannot register to TTP: public key is nil")
 	}
-	data := identity.LoadRegistrationData(baseDir)
 	encryptedID, err := identity.EncryptWithPublicKeyBase64([]byte(data.ID), ttpPublicKey)
 	if err != nil {
 		log.Fatal(err)
