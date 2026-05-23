@@ -15,6 +15,17 @@ import (
 
 const baseDir = "/tmp/scs/server/"
 
+//func main() {
+//	app, err := client.NewAppFromEnv()
+//	if err != nil {
+//		log.Fatalln(err)
+//	}
+//
+//	if err = app.Run(); err != nil {
+//		log.Fatalln(err)
+//	}
+//}
+
 func main() {
 	addr, err := ttpClient.AddrFromEnv("TTP_ADDR")
 	if err != nil {
