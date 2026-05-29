@@ -25,13 +25,13 @@ func (s *Service) Init() (protocol.Message, error) {
 	}, nil
 }
 
-func (s *Service) Register(reg protocol.RegistrationData) (protocol.Message, error) {
+func (s *Service) Register(reg protocol.RegisterRequest) (protocol.Message, error) {
 	ttpEncPrivateKey, err := identity.LoadPrivateKey(filepath.Join(s.baseDir, "enc.key"))
 	if err != nil {
 		return protocol.Message{}, err
 	}
 
-	decryptedIDBytes, err := identity.DecryptWithPrivateKeyBase64(reg.ID, ttpEncPrivateKey)
+	decryptedIDBytes, err := identity.DecryptWithPrivateKeyBase64(reg.EncryptedID, ttpEncPrivateKey)
 	if err != nil {
 		return protocol.Message{}, err
 	}

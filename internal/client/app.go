@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"scs/internal/protocol"
 
 	"scs/internal/client/httpapi"
 	"scs/internal/client/serverclient"
@@ -50,18 +51,27 @@ func (a *App) Bootstrap() error {
 	data := identity.LoadRegistrationData(a.config.BaseDir)
 
 	var encryptedID string
-	encryptedID, err = identity.EncryptWithPublicKeyBase64([]byte(data.ID), ttpPublicKey)
+	encryptedID, err = identity.EncryptWithPublicKeyBase64([]byte(data.EncryptedID), ttpPublicKey)
 	if err != nil {
 		return fmt.Errorf("encrypt id for ttp: %w", err)
 	}
 
 	var certificateBase64 string
-	certificateBase64, err = a.ttpClient.Register(encryptedID, data.AuthPublicKey)
+	certificateBase64, err = a.ttpClient.Register(
+		protocol.RegisterRequest{
+			EncryptedID:   encryptedID,
+			EncPublicKey:  data.EncPublicKey,
+			AuthPublicKey: data.AuthPublicKey,
+			Role:          protocol.EntityRoleClient,
+		})
+
 	if err != nil {
 		return fmt.Errorf("ttp register: %w", err)
 	}
 
-	_ = certificateBase64
+	if err = identity.SaveCertificate(a.config.BaseDir, certificateBase64); err != nil {
+		return fmt.Errorf("save certificate: %w", err)
+	}
 
 	return nil
 }

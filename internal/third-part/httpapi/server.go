@@ -7,7 +7,7 @@ import (
 
 type TTPService interface {
 	Init() (protocol.Message, error)
-	Register(req protocol.RegistrationData) (protocol.Message, error)
+	Register(req protocol.RegisterRequest) (protocol.Message, error)
 }
 
 type Server struct {

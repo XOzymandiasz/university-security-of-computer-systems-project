@@ -64,12 +64,7 @@ func (c *Client) Init() (*rsa.PublicKey, error) {
 	return key, nil
 }
 
-func (c *Client) Register(encryptedID string, authPublicKeyBase64 string) (string, error) {
-	req := protocol.RegistrationData{
-		ID:            encryptedID,
-		AuthPublicKey: authPublicKeyBase64,
-	}
-
+func (c *Client) Register(req protocol.RegisterRequest) (string, error) {
 	body, err := json.Marshal(req)
 	if err != nil {
 		return "", fmt.Errorf("marshal register request: %w", err)

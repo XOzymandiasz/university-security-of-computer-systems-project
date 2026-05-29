@@ -19,8 +19,26 @@ import (
 var idFileName = "id.txt"
 var authFileName = "auth.key"
 var encFileName = "enc.key"
+var certFileName = "cert.key"
 
-func LoadRegistrationData(baseDir string) protocol.RegistrationData {
+func HasCertificate(baseDir string) bool {
+	path := filepath.Join(baseDir, certFileName)
+
+	_, err := os.Stat(path)
+	return err == nil
+}
+
+func SaveCertificate(baseDir string, certificateBase64 string) error {
+	if err := os.MkdirAll(baseDir, 0700); err != nil {
+		return err
+	}
+
+	path := filepath.Join(baseDir, certFileName)
+
+	return os.WriteFile(path, []byte(certificateBase64), 0600)
+}
+
+func LoadRegistrationData(baseDir string) protocol.RegisterRequest {
 	idBytes, err := os.ReadFile(filepath.Join(baseDir, idFileName))
 	if err != nil {
 		log.Fatal(err)
@@ -28,8 +46,8 @@ func LoadRegistrationData(baseDir string) protocol.RegistrationData {
 	authPub := loadPublicKeyBase64(filepath.Join(baseDir, authFileName))
 	encPub := loadPublicKeyBase64(filepath.Join(baseDir, encFileName))
 
-	return protocol.RegistrationData{
-		ID:            string(idBytes),
+	return protocol.RegisterRequest{
+		EncryptedID:   string(idBytes),
 		AuthPublicKey: authPub,
 		EncPublicKey:  encPub,
 	}
