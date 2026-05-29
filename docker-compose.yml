@@ -47,15 +47,15 @@ services:
       - server
     command: sh -c "sleep 2 && /app/client"
 
-  frontend:
+  ui:
     build:
-      context: frontend
-    container_name: scs-frontend
+      context: ui
+    container_name: scs-ui
     ports:
       - "3000:4200"
     volumes:
-      - ./frontend:/app
-      - frontend_node_modules:/app/node_modules
+      - ./ui:/app
+      - ui_node_modules:/app/node_modules
     depends_on:
       - client
       - server
