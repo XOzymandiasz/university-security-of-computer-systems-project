@@ -1,24 +1,20 @@
 package httpapi
 
-import "net/http"
+import (
+	"net/http"
+)
 
 type ReadMessageUseCase interface {
 	ReadMessage() (string, error)
 }
 
-type HealthCheckUseCase interface {
-	HealthCheck() string
-}
-
 type Server struct {
 	readMessage ReadMessageUseCase
-	healthCheck HealthCheckUseCase
 }
 
-func New(readMessage ReadMessageUseCase, healthCheck HealthCheckUseCase) *Server {
+func New(readMessage ReadMessageUseCase) *Server {
 	return &Server{
 		readMessage: readMessage,
-		healthCheck: healthCheck,
 	}
 }
 

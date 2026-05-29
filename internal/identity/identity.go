@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"scs/internal/protocol"
 )
 
@@ -20,12 +21,12 @@ var authFileName = "auth.key"
 var encFileName = "enc.key"
 
 func LoadRegistrationData(baseDir string) protocol.RegistrationData {
-	idBytes, err := os.ReadFile(baseDir + idFileName)
+	idBytes, err := os.ReadFile(filepath.Join(baseDir, idFileName))
 	if err != nil {
 		log.Fatal(err)
 	}
-	authPub := loadPublicKeyBase64(baseDir + authFileName)
-	encPub := loadPublicKeyBase64(baseDir + encFileName)
+	authPub := loadPublicKeyBase64(filepath.Join(baseDir, authFileName))
+	encPub := loadPublicKeyBase64(filepath.Join(baseDir, encFileName))
 
 	return protocol.RegistrationData{
 		ID:            string(idBytes),
@@ -86,9 +87,9 @@ func EnsureIdentity(baseDir string) {
 		log.Fatal(err)
 	}
 
-	ensureKey(baseDir + authFileName)
-	ensureKey(baseDir + encFileName)
-	ensureId(baseDir + idFileName)
+	ensureKey(filepath.Join(baseDir, authFileName))
+	ensureKey(filepath.Join(baseDir, encFileName))
+	ensureId(filepath.Join(baseDir, idFileName))
 
 	fmt.Println("Identity ready")
 }

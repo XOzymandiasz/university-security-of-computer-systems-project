@@ -6,11 +6,13 @@ import (
 )
 
 const defaultBaseDir = "/tmp/scs/server"
+const messagePath = "/app/message"
 
 type Config struct {
-	BaseDir string
-	Port    string
-	TTPAddr string
+	BaseDir     string
+	MessagePath string
+	Port        string
+	TTPAddr     string
 }
 
 func ConfigFromEnv() (Config, error) {
@@ -25,8 +27,9 @@ func ConfigFromEnv() (Config, error) {
 	}
 
 	return Config{
-		BaseDir: defaultBaseDir,
-		Port:    port,
-		TTPAddr: ttpAddr,
+		BaseDir:     defaultBaseDir,
+		MessagePath: messagePath,
+		Port:        port,
+		TTPAddr:     ttpAddr,
 	}, nil
 }

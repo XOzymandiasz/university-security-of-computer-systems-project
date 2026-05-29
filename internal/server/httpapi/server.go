@@ -2,24 +2,21 @@ package httpapi
 
 import "net/http"
 
-type HealthCheckUseCase interface {
-	HealthCheck() string
-}
-
-func New(healthCheck HealthCheckUseCase) *Server {
+func New(messagePath string) *Server {
 	return &Server{
-		healthCheck: healthCheck,
+		messagePath: messagePath,
 	}
 }
 
 type Server struct {
-	healthCheck HealthCheckUseCase
+	messagePath string
 }
 
 func (s *Server) Handler() http.Handler {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/health", s.handleHealth)
+	mux.HandleFunc("/api/message", s.handleMessage)
 
 	return mux
 }

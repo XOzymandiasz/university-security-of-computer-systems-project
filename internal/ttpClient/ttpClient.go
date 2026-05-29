@@ -24,7 +24,7 @@ func Init(addr string) (*rsa.PublicKey, error) {
 	if err != nil {
 		return nil, err
 	}
-
+	fmt.Println("x1")
 	if ttpPublicKey == nil {
 		return nil, fmt.Errorf("TTP public key is nil")
 	}

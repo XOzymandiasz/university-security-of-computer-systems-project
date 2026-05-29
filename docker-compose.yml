@@ -27,7 +27,7 @@ services:
       - scs-net
     depends_on:
       - ttp
-    command: sh -c "sleep 2 && /app/server"
+    command: sh -c "sleep 4 && /app/server"
 
   client:
     build:
@@ -45,7 +45,7 @@ services:
     depends_on:
       - ttp
       - server
-    command: sh -c "sleep 2 && /app/client"
+    command: sh -c "sleep 4 && /app/client"
 
   ui:
     build:
@@ -67,4 +67,4 @@ networks:
   scs-net:
 
 volumes:
-  frontend_node_modules:
+  ui_node_modules:

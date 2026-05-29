@@ -17,7 +17,6 @@ func Init(addr string) (*rsa.PublicKey, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	if response.Type != "TTP_PUBLIC_KEY" {
 		return nil, fmt.Errorf("unexpected response type: %s", response.Type)
 	}

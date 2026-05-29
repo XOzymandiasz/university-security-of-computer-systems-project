@@ -6,7 +6,8 @@ import (
 )
 
 func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
-	s.healthCheck.HealthCheck()
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write([]byte("healthy"))
 }
 
 func (s *Server) handleMessage(w http.ResponseWriter, r *http.Request) {
