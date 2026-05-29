@@ -1,42 +1,42 @@
-import {ChangeDetectorRef, Component} from '@angular/core';
-import { ReactiveFormsModule } from '@angular/forms';
-import { RouterModule } from '@angular/router';
-import { MessageService } from '../../service/message.service';
-import { MessageModel } from '../../model/message.model';
+import { Component, inject, signal } from '@angular/core';
+import {MessageService} from '../../service/message.service';
+import {MessageResponseModel} from '../../model/messageResponse.model';
 
 @Component({
   selector: 'app-message',
+  imports: [],
   templateUrl: './message.component.html',
-  styleUrls: ['./message.component.scss'],
-  standalone: true,
-  imports: [ReactiveFormsModule, RouterModule],
+  styleUrl: './message.component.scss',
 })
 export class MessageComponent {
-  message?: MessageModel;
-  loading = false;
-  error?: string;
+  private readonly messageService = inject(MessageService);
 
-  constructor(
-    private service: MessageService,
-    private cdr: ChangeDetectorRef,
-  ) {}
+  readonly messageText = signal('');
+  readonly response = signal<MessageResponseModel | null>(null);
+  readonly loading = signal(false);
+  readonly error = signal('');
 
-  getMessage(): void {
-    this.loading = true;
-    this.error = undefined;
+  sendMessage(event: SubmitEvent): void {
+    event.preventDefault();
 
-    this.service.getMessage().subscribe({
-      next: (response: MessageModel) => {
-        this.message = response;
-        this.loading = false;
+    const text = this.messageText().trim();
 
-        this.cdr.detectChanges();
+    if (!text) {
+      return;
+    }
+
+    this.loading.set(true);
+    this.error.set('');
+    this.response.set(null);
+
+    this.messageService.sendMessage({ body: text }).subscribe({
+      next: (res) => {
+        this.response.set(res);
+        this.loading.set(false);
       },
-      error: (err) => {
-        this.error = 'Could not load message';
-        this.loading = false;
-        this.cdr.detectChanges();
-        console.error(err);
+      error: () => {
+        this.error.set('Failed to send message.');
+        this.loading.set(false);
       },
     });
   }

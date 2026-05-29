@@ -99,7 +99,7 @@ func (c *Client) Register(encryptedID string, authPublicKeyBase64 string) (strin
 	}
 
 	var response protocol.Message
-	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
+	if err = json.NewDecoder(resp.Body).Decode(&response); err != nil {
 		return "", fmt.Errorf("decode register response: %w", err)
 	}
 

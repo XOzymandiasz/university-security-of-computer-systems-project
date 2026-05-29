@@ -1,7 +1,7 @@
 package usecase
 
 type MessageReader interface {
-	ReadMessage() (string, error)
+	ReadMessage(msg string) (string, error)
 }
 
 type ReadMessage struct {
@@ -14,6 +14,6 @@ func NewReadMessage(reader MessageReader) *ReadMessage {
 	}
 }
 
-func (r *ReadMessage) ReadMessage() (string, error) {
-	return r.reader.ReadMessage()
+func (r *ReadMessage) ReadMessage(msg string) (string, error) {
+	return r.reader.ReadMessage(msg)
 }

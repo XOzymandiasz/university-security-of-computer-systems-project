@@ -5,7 +5,7 @@ import (
 )
 
 type ReadMessageUseCase interface {
-	ReadMessage() (string, error)
+	ReadMessage(msg string) (string, error)
 }
 
 type Server struct {

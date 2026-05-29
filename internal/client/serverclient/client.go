@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"scs/internal/client/httpapi"
 	"scs/internal/identity"
 	"scs/internal/protocol"
 )
@@ -115,24 +116,46 @@ func (c *Client) Register(encryptedID string, authPublicKeyBase64 string) (strin
 	return certificateBase64, nil
 }
 
-func (c *Client) ReadMessage() (string, error) {
-	resp, err := http.Get("http://" + c.addr + "/api/message")
+func (c *Client) ReadMessage(msg string) (string, error) {
+	fmt.Println("#1")
+	req := httpapi.MessageRequest{
+		Body: msg,
+	}
+
+	body, err := json.Marshal(req)
+	if err != nil {
+		return "", fmt.Errorf("marshal message request: %w", err)
+	}
+	fmt.Println("#2")
+	httpReq, err := http.NewRequest(
+		http.MethodPost,
+		"http://"+c.addr+"/api/message",
+		bytes.NewReader(body),
+	)
+	if err != nil {
+		return "", fmt.Errorf("create message request: %w", err)
+	}
+	fmt.Println("#3")
+	httpReq.Header.Set("Content-Type", "application/json")
+
+	resp, err := http.DefaultClient.Do(httpReq)
 	if err != nil {
 		return "", fmt.Errorf("ttp read message request: %w", err)
 	}
 	defer func() {
 		_ = resp.Body.Close()
 	}()
-
+	fmt.Println("#4")
+	fmt.Println(resp.StatusCode)
 	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
+		body, _ = io.ReadAll(resp.Body)
 		return "", fmt.Errorf("ttp read message failed: status=%d body=%s", resp.StatusCode, string(body))
 	}
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", fmt.Errorf("read message response body: %w", err)
+	fmt.Println("#5")
+	var response httpapi.MessageResponse
+	if err = json.NewDecoder(resp.Body).Decode(&response); err != nil {
+		return "", fmt.Errorf("decode message response: %w", err)
 	}
-
-	return string(body), nil
+	fmt.Println("#6")
+	return response.Body, nil
 }

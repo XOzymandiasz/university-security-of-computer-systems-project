@@ -11,6 +11,8 @@ $text-accent: #a6e22e;
 $button-bg: #fd5ff0;
 $button-hover-bg: #f8b6f2;
 
+$error-color: #f92672;
+
 .message-card {
   width: min(480px, calc(100vw - 32px));
   padding: 24px;
@@ -35,6 +37,44 @@ $button-hover-bg: #f8b6f2;
   }
 }
 
+.message-form {
+  margin-top: 24px;
+}
+
+.message-label {
+  display: block;
+  margin-bottom: 8px;
+  color: $text-main;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.message-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 13px 14px;
+  border-radius: 12px;
+  border: 1px solid $message-border-light;
+  outline: none;
+  background: $message-bg-dark;
+  color: $text-main;
+  font-size: 15px;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    background 0.15s ease;
+
+  &::placeholder {
+    color: $text-muted;
+  }
+
+  &:focus {
+    border-color: $text-accent;
+    box-shadow: 0 0 0 3px rgba(166, 226, 46, 0.16);
+    background: darken($message-bg-dark, 2%);
+  }
+}
+
 .message-content {
   margin-top: 24px;
   min-height: 72px;
@@ -49,6 +89,8 @@ $button-hover-bg: #f8b6f2;
   color: $text-main;
   font-size: 16px;
   line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 .message-empty {
@@ -56,6 +98,13 @@ $button-hover-bg: #f8b6f2;
   color: $text-muted;
   font-size: 15px;
   font-style: italic;
+}
+
+.message-error {
+  margin: 0;
+  color: $error-color;
+  font-size: 15px;
+  font-weight: 700;
 }
 
 .message-button {
@@ -72,17 +121,24 @@ $button-hover-bg: #f8b6f2;
   transition:
     background 0.15s ease,
     transform 0.15s ease,
-    box-shadow 0.15s ease;
+    box-shadow 0.15s ease,
+    opacity 0.15s ease;
   box-shadow: 0 6px 18px rgba(249, 38, 114, 0.35);
 
-  &:hover {
+  &:hover:not(:disabled) {
     background: $button-hover-bg;
     transform: translateY(-1px);
     box-shadow: 0 8px 22px rgba(253, 95, 240, 0.35);
   }
 
-  &:active {
+  &:active:not(:disabled) {
     transform: translateY(0);
     box-shadow: 0 4px 12px rgba(249, 38, 114, 0.25);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+    box-shadow: none;
   }
 }

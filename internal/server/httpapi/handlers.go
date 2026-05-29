@@ -1,8 +1,9 @@
 package httpapi
 
 import (
+	"encoding/json"
 	"net/http"
-	"os"
+	"strings"
 )
 
 func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
@@ -11,19 +12,34 @@ func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleMessage(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
+	if r.Method != http.MethodPost {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
-	data, err := os.ReadFile(s.messagePath)
+	var request MessageRequest
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		http.Error(w, "invalid request body", http.StatusBadRequest)
+		return
+	}
+	defer func() {
+		_ = r.Body.Close()
+	}()
 
-	if err != nil {
-		http.Error(w, "read message file", http.StatusInternalServerError)
+	if request.Body == "" {
+		http.Error(w, "message body is required", http.StatusBadRequest)
 		return
 	}
 
-	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	response := MessageResponse{
+		Body: strings.ToUpper(request.Body),
+	}
+
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	_, _ = w.Write(data)
+
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		http.Error(w, "encode response", http.StatusInternalServerError)
+		return
+	}
 }
