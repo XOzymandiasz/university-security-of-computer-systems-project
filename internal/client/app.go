@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"scs/internal/protocol"
 
+	"scs/internal/client/client"
 	"scs/internal/client/httpapi"
 	"scs/internal/client/usecase"
 	"scs/internal/identity"

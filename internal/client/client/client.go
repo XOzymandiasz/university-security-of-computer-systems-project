@@ -24,7 +24,7 @@ func New(addr string, baseDir string) *Client {
 }
 
 func (c *Client) Init() (*rsa.PublicKey, error) {
-	resp, err := http.Get("http://" + c.addr + "/api/init")
+	resp, err := http.Get(c.url("/api/init"))
 	if err != nil {
 		return nil, fmt.Errorf("ttp init request: %w", err)
 	}
@@ -65,7 +65,7 @@ func (c *Client) Register(req protocol.RegisterRequest) (string, error) {
 	var httpReq *http.Request
 	httpReq, err = http.NewRequest(
 		http.MethodPost,
-		"http://"+c.addr+"/api/register",
+		c.url("/api/register"),
 		bytes.NewReader(body),
 	)
 	if err != nil {
@@ -109,7 +109,7 @@ func (c *Client) Authenticate(req protocol.ClientAuthenticateRequest) (protocol.
 	var httpReq *http.Request
 	httpReq, err = http.NewRequest(
 		http.MethodPost,
-		"http://"+c.addr+"/api/authenticate",
+		c.url("/api/authenticate"),
 		bytes.NewReader(body),
 	)
 	if err != nil {
@@ -173,7 +173,7 @@ func (c *Client) ReadMessage(msg string) (string, error) {
 	var httpReq *http.Request
 	httpReq, err = http.NewRequest(
 		http.MethodPost,
-		"http://"+c.addr+"/api/message",
+		c.url("/api/message"),
 		bytes.NewReader(body),
 	)
 	if err != nil {
@@ -210,4 +210,8 @@ func (c *Client) ReadMessage(msg string) (string, error) {
 	_ = identity.DeleteSessionKey(c.baseDir)
 
 	return string(plaintext), nil
+}
+
+func (c *Client) url(path string) string {
+	return "http://" + c.addr + path
 }
