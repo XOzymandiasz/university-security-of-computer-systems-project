@@ -7,7 +7,6 @@ import (
 	"scs/internal/protocol"
 
 	"scs/internal/client/httpapi"
-	"scs/internal/client/serverclient"
 	"scs/internal/client/usecase"
 	"scs/internal/identity"
 )
@@ -15,8 +14,8 @@ import (
 type App struct {
 	config       Config
 	api          *httpapi.Server
-	serverClient *serverclient.Client
-	ttpClient    *serverclient.Client
+	serverClient *client.Client
+	ttpClient    *client.Client
 }
 
 func NewAppFromEnv() (*App, error) {
@@ -25,8 +24,8 @@ func NewAppFromEnv() (*App, error) {
 		return nil, err
 	}
 
-	serverClient := serverclient.New(cfg.ServerAddr, cfg.BaseDir)
-	ttpClient := serverclient.New(cfg.TTPAddr, cfg.BaseDir)
+	serverClient := client.New(cfg.ServerAddr, cfg.BaseDir)
+	ttpClient := client.New(cfg.TTPAddr, cfg.BaseDir)
 
 	readMessage := usecase.NewReadMessage(serverClient)
 	authenticate := usecase.NewAuthenticate(cfg.BaseDir, serverClient, ttpClient)

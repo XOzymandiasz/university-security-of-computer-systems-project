@@ -1,4 +1,4 @@
-package serverclient
+package client
 
 import (
 	"bytes"

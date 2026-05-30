@@ -7,13 +7,12 @@ import (
 	"scs/internal/identity"
 	"scs/internal/protocol"
 	"scs/internal/server/httpapi"
-	"scs/internal/server/serverclient"
 )
 
 type App struct {
 	config    Config
 	api       *httpapi.Server
-	ttpClient *serverclient.Client
+	ttpClient *client.Client
 }
 
 func NewAppFromEnv() (*App, error) {
@@ -22,7 +21,7 @@ func NewAppFromEnv() (*App, error) {
 		return nil, err
 	}
 
-	ttpClient := serverclient.New(cfg.TTPAddr)
+	ttpClient := client.New(cfg.TTPAddr)
 
 	api := httpapi.New(cfg.MessagePath, cfg.BaseDir, ttpClient)
 
