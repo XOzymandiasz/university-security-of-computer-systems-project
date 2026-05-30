@@ -20,8 +20,14 @@ func (s *Server) handleMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	sessionKey, err := identity.LoadSessionKey(s.baseDir)
+	if err != nil {
+		http.Error(w, "server is not authenticated - missing session key", http.StatusUnauthorized)
+		return
+	}
+
 	var request protocol.MessageRequest
-	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+	if err = json.NewDecoder(r.Body).Decode(&request); err != nil {
 		http.Error(w, "invalid request body", http.StatusBadRequest)
 		return
 	}
@@ -29,19 +35,35 @@ func (s *Server) handleMessage(w http.ResponseWriter, r *http.Request) {
 		_ = r.Body.Close()
 	}()
 
-	if request.Body == "" {
-		http.Error(w, "message body is required", http.StatusBadRequest)
+	if request.EncryptedBody == "" {
+		http.Error(w, "encrypted body is required", http.StatusBadRequest)
+		return
+	}
+
+	plaintext, err := identity.DecryptWithSessionKeyBase64(request.EncryptedBody, sessionKey)
+	if err != nil {
+		http.Error(w, "decrypt request: "+err.Error(), http.StatusUnauthorized)
+		return
+	}
+
+	responseText := strings.ToUpper(string(plaintext))
+
+	encryptedResponse, err := identity.EncryptWithSessionKeyBase64([]byte(responseText), sessionKey)
+	if err != nil {
+		http.Error(w, "encrypt response: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	response := protocol.MessageResponse{
-		Body: strings.ToUpper(request.Body),
+		EncryptedBody: encryptedResponse,
 	}
+
+	_ = identity.DeleteSessionKey(s.baseDir)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 
-	if err := json.NewEncoder(w).Encode(response); err != nil {
+	if err = json.NewEncoder(w).Encode(response); err != nil {
 		http.Error(w, "encode response", http.StatusInternalServerError)
 		return
 	}
@@ -67,9 +89,22 @@ func (s *Server) handleAuthenticate(writer http.ResponseWriter, request *http.Re
 		return
 	}
 
+	serverAuthPrivateKey, err := identity.LoadPrivateKey(filepath.Join(s.baseDir, "auth.key"))
+	if err != nil {
+		http.Error(writer, "load server auth private key: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	serverSignature, err := identity.SignBase64([]byte(serverData.EncryptedID), serverAuthPrivateKey)
+	if err != nil {
+		http.Error(writer, "sign server id: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	ttpReq := protocol.AuthenticateRequest{
 		ServerID:               serverData.EncryptedID,
 		ServerCertificate:      serverCertificate,
+		ServerSignature:        serverSignature,
 		ClientEncryptedPayload: clientReq.ClientEncryptedPayload,
 	}
 

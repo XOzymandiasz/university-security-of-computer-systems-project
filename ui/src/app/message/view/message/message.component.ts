@@ -20,14 +20,14 @@ export class MessageComponent {
   sendMessage(event: SubmitEvent): void {
     event.preventDefault();
 
-    if (!this.authenticated()) {
-      this.response.set({
-        body: 'Authenticate first.',
-      });
+   if (!this.authenticated()) {
+     this.response.set({
+       body: 'Authenticate first.',
+     });
 
-      this.error.set('');
-      return;
-    }
+     this.error.set('');
+     return;
+   }
 
     const text = this.messageText().trim();
 
@@ -43,10 +43,12 @@ export class MessageComponent {
       next: (res) => {
         this.response.set(res);
         this.loading.set(false);
+        this.authenticated.set(false);
       },
       error: () => {
         this.error.set('Failed to send message.');
         this.loading.set(false);
+        this.authenticated.set(false);
       },
     });
   }

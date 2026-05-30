@@ -21,6 +21,16 @@ var authFileName = "auth.key"
 var encFileName = "enc.key"
 var certFileName = "cert.key"
 
+func DeleteSessionKey(baseDir string) error {
+	path := filepath.Join(baseDir, "session.key")
+
+	if err := os.Remove(path); err != nil && !os.IsNotExist(err) {
+		return err
+	}
+
+	return nil
+}
+
 func GenerateRandomBytes(size int) ([]byte, error) {
 	data := make([]byte, size)
 
@@ -160,7 +170,7 @@ func ensureKey(path string) {
 	}
 
 	var privateKey *rsa.PrivateKey
-	privateKey, err = rsa.GenerateKey(rand.Reader, 2048)
+	privateKey, err = rsa.GenerateKey(rand.Reader, 4096)
 	if err != nil {
 		log.Fatal(err)
 	}

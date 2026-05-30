@@ -92,8 +92,27 @@ func (s *Service) Authenticate(req protocol.AuthenticateRequest) (protocol.Authe
 		return protocol.AuthenticateResponse{}, fmt.Errorf("entity is not server")
 	}
 
-	if req.ServerCertificate != serverEntity.Certificate {
-		return protocol.AuthenticateResponse{}, fmt.Errorf("invalid server certificate")
+	ttpAuthPrivateKey, err := identity.LoadPrivateKey(filepath.Join(s.baseDir, "auth.key"))
+	if err != nil {
+		return protocol.AuthenticateResponse{}, fmt.Errorf("load ttp auth private key: %w", err)
+	}
+
+	if err = identity.ValidateCertificateBase64(
+		req.ServerCertificate,
+		serverEntity.ID,
+		serverEntity.AuthPublicKey,
+		&ttpAuthPrivateKey.PublicKey,
+	); err != nil {
+		return protocol.AuthenticateResponse{}, fmt.Errorf("invalid server certificate: %w", err)
+	}
+
+	serverAuthPublicKey, err := identity.ParsePublicKeyFromBase64(serverEntity.AuthPublicKey)
+	if err != nil {
+		return protocol.AuthenticateResponse{}, fmt.Errorf("parse server auth public key: %w", err)
+	}
+
+	if err = identity.VerifySignatureBase64([]byte(req.ServerID), req.ServerSignature, serverAuthPublicKey); err != nil {
+		return protocol.AuthenticateResponse{}, fmt.Errorf("invalid server signature: %w", err)
 	}
 
 	clientPayloadBytes, err := identity.DecryptLargePayloadWithPrivateKeyBase64(
@@ -118,8 +137,22 @@ func (s *Service) Authenticate(req protocol.AuthenticateRequest) (protocol.Authe
 		return protocol.AuthenticateResponse{}, fmt.Errorf("entity is not client")
 	}
 
-	if clientPayload.ClientCertificate != clientEntity.Certificate {
-		return protocol.AuthenticateResponse{}, fmt.Errorf("invalid client certificate")
+	if err = identity.ValidateCertificateBase64(
+		clientPayload.ClientCertificate,
+		clientEntity.ID,
+		clientEntity.AuthPublicKey,
+		&ttpAuthPrivateKey.PublicKey,
+	); err != nil {
+		return protocol.AuthenticateResponse{}, fmt.Errorf("invalid client certificate: %w", err)
+	}
+
+	clientAuthPublicKey, err := identity.ParsePublicKeyFromBase64(clientEntity.AuthPublicKey)
+	if err != nil {
+		return protocol.AuthenticateResponse{}, fmt.Errorf("parse client auth public key: %w", err)
+	}
+
+	if err = identity.VerifySignatureBase64([]byte(clientPayload.ClientID), clientPayload.ClientSignature, clientAuthPublicKey); err != nil {
+		return protocol.AuthenticateResponse{}, fmt.Errorf("invalid client signature: %w", err)
 	}
 
 	sessionKey, err := identity.GenerateRandomBytes(32)

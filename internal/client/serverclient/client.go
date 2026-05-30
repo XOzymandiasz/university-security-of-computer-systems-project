@@ -17,11 +17,15 @@ type RegisterRequest struct {
 }
 
 type Client struct {
-	addr string
+	addr    string
+	baseDir string
 }
 
-func New(addr string) *Client {
-	return &Client{addr: addr}
+func New(addr string, baseDir string) *Client {
+	return &Client{
+		addr:    addr,
+		baseDir: baseDir,
+	}
 }
 
 func (c *Client) Init() (*rsa.PublicKey, error) {
@@ -147,8 +151,18 @@ func (c *Client) Authenticate(
 }
 
 func (c *Client) ReadMessage(msg string) (string, error) {
+	sessionKey, err := identity.LoadSessionKey(c.baseDir)
+	if err != nil {
+		return "", fmt.Errorf("client is not authenticated - missing session key: %w", err)
+	}
+
+	encryptedBody, err := identity.EncryptWithSessionKeyBase64([]byte(msg), sessionKey)
+	if err != nil {
+		return "", fmt.Errorf("encrypt message: %w", err)
+	}
+
 	req := protocol.MessageRequest{
-		Body: msg,
+		EncryptedBody: encryptedBody,
 	}
 
 	body, err := json.Marshal(req)
@@ -169,18 +183,28 @@ func (c *Client) ReadMessage(msg string) (string, error) {
 
 	resp, err := http.DefaultClient.Do(httpReq)
 	if err != nil {
-		return "", fmt.Errorf("ttp read message request: %w", err)
+		return "", fmt.Errorf("server read message request: %w", err)
 	}
 	defer func() {
 		_ = resp.Body.Close()
 	}()
+
 	if resp.StatusCode != http.StatusOK {
 		body, _ = io.ReadAll(resp.Body)
-		return "", fmt.Errorf("ttp read message failed: status=%d body=%s", resp.StatusCode, string(body))
+		return "", fmt.Errorf("server read message failed: status=%d body=%s", resp.StatusCode, string(body))
 	}
+
 	var response protocol.MessageResponse
 	if err = json.NewDecoder(resp.Body).Decode(&response); err != nil {
 		return "", fmt.Errorf("decode message response: %w", err)
 	}
-	return response.Body, nil
+
+	plaintext, err := identity.DecryptWithSessionKeyBase64(response.EncryptedBody, sessionKey)
+	if err != nil {
+		return "", fmt.Errorf("decrypt message response: %w", err)
+	}
+
+	_ = identity.DeleteSessionKey("./data/client")
+
+	return string(plaintext), nil
 }

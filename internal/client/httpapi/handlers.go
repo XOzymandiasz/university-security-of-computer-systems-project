@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"scs/internal/identity"
 	"scs/internal/protocol"
 )
 
@@ -18,7 +19,7 @@ func (s *Server) handleMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var request protocol.MessageRequest
+	var request protocol.UIMessageRequest
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
 		http.Error(w, "invalid request body", http.StatusBadRequest)
 		return
@@ -32,6 +33,11 @@ func (s *Server) handleMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if _, err := identity.LoadSessionKey(s.baseDir); err != nil {
+		http.Error(w, "authenticate first - missing client session key", http.StatusUnauthorized)
+		return
+	}
+
 	text, err := s.readMessage.ReadMessage(request.Body)
 	if err != nil {
 		http.Error(w, "server error: "+err.Error(), http.StatusBadGateway)
@@ -41,7 +47,7 @@ func (s *Server) handleMessage(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 
-	_ = json.NewEncoder(w).Encode(protocol.MessageResponse{
+	_ = json.NewEncoder(w).Encode(protocol.UIMessageResponse{
 		Body: text,
 	})
 }

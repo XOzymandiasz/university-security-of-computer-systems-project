@@ -13,15 +13,18 @@ type AuthenticateUseCase interface {
 type Server struct {
 	readMessage  ReadMessageUseCase
 	authenticate AuthenticateUseCase
+	baseDir      string
 }
 
 func New(
 	readMessage ReadMessageUseCase,
 	authenticate AuthenticateUseCase,
+	baseDir string,
 ) *Server {
 	return &Server{
 		readMessage:  readMessage,
 		authenticate: authenticate,
+		baseDir:      baseDir,
 	}
 }
 
