@@ -41,19 +41,12 @@ func (c *Client) Init() (*rsa.PublicKey, error) {
 		return nil, fmt.Errorf("ttp init failed: status=%d body=%s", resp.StatusCode, string(body))
 	}
 
-	var response protocol.Message
+	var response protocol.InitResponse
 	if err = json.NewDecoder(resp.Body).Decode(&response); err != nil {
 		return nil, fmt.Errorf("decode init response: %w", err)
 	}
 
-	if response.Type != "TTP_PUBLIC_KEY" {
-		return nil, fmt.Errorf("unexpected response type: %s", response.Type)
-	}
-
-	keyBase64, ok := response.Body.(string)
-	if !ok {
-		return nil, fmt.Errorf("invalid response body type: %T", response.Body)
-	}
+	keyBase64 := response.TTPEncPublicKey
 
 	key, err := identity.ParsePublicKeyFromBase64(keyBase64)
 	if err != nil {
@@ -89,23 +82,18 @@ func (c *Client) Register(req protocol.RegisterRequest) (string, error) {
 	}()
 
 	if resp.StatusCode != http.StatusOK {
-		body, _ = io.ReadAll(resp.Body)
-		return "", fmt.Errorf("ttp register failed: status=%d body=%s", resp.StatusCode, string(body))
+		respBody, _ := io.ReadAll(resp.Body)
+		return "", fmt.Errorf("ttp register failed: status=%d body=%s", resp.StatusCode, string(respBody))
 	}
 
-	var response protocol.Message
+	var response protocol.RegisterResponse
 	if err = json.NewDecoder(resp.Body).Decode(&response); err != nil {
 		return "", fmt.Errorf("decode register response: %w", err)
 	}
 
-	if response.Type != "CERTIFICATE" {
-		return "", fmt.Errorf("unexpected response type: %s", response.Type)
+	if response.Certificate == "" {
+		return "", fmt.Errorf("empty certificate in register response")
 	}
 
-	certificateBase64, ok := response.Body.(string)
-	if !ok {
-		return "", fmt.Errorf("invalid certificate body type: %T", response.Body)
-	}
-
-	return certificateBase64, nil
+	return response.Certificate, nil
 }

@@ -1,6 +1,9 @@
 package protocol
 
-type Message struct {
-	Type string `json:"type"`
-	Body any    `json:"body"`
+type MessageRequest struct {
+	Body string `json:"body"`
+}
+
+type MessageResponse struct {
+	Body string `json:"body"`
 }

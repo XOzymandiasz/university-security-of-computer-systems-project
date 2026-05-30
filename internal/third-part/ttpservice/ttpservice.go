@@ -16,34 +16,33 @@ func New(baseDir string) *Service {
 	}
 }
 
-func (s *Service) Init() (protocol.Message, error) {
+func (s *Service) Init() (protocol.InitResponse, error) {
 	responseData := identity.LoadRegistrationData(s.baseDir)
 
-	return protocol.Message{
-		Type: "TTP_PUBLIC_KEY",
-		Body: responseData.EncPublicKey,
+	return protocol.InitResponse{
+		TTPEncPublicKey: responseData.EncPublicKey,
 	}, nil
 }
 
-func (s *Service) Register(reg protocol.RegisterRequest) (protocol.Message, error) {
+func (s *Service) Register(reg protocol.RegisterRequest) (protocol.RegisterResponse, error) {
 	ttpEncPrivateKey, err := identity.LoadPrivateKey(filepath.Join(s.baseDir, "enc.key"))
 	if err != nil {
-		return protocol.Message{}, err
+		return protocol.RegisterResponse{}, err
 	}
 
 	decryptedIDBytes, err := identity.DecryptWithPrivateKeyBase64(reg.EncryptedID, ttpEncPrivateKey)
 	if err != nil {
-		return protocol.Message{}, err
+		return protocol.RegisterResponse{}, err
 	}
 
 	userAuthPublicKey, err := identity.ParsePublicKeyFromBase64(reg.AuthPublicKey)
 	if err != nil {
-		return protocol.Message{}, err
+		return protocol.RegisterResponse{}, err
 	}
 
 	ttpAuthPrivateKey, err := identity.LoadPrivateKey(filepath.Join(s.baseDir, "auth.key"))
 	if err != nil {
-		return protocol.Message{}, err
+		return protocol.RegisterResponse{}, err
 	}
 
 	certificateBase64, err := identity.CreateCertificateBase64(
@@ -52,11 +51,10 @@ func (s *Service) Register(reg protocol.RegisterRequest) (protocol.Message, erro
 		ttpAuthPrivateKey,
 	)
 	if err != nil {
-		return protocol.Message{}, err
+		return protocol.RegisterResponse{}, err
 	}
 
-	return protocol.Message{
-		Type: "CERTIFICATE",
-		Body: certificateBase64,
+	return protocol.RegisterResponse{
+		Certificate: certificateBase64,
 	}, nil
 }

@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"scs/internal/client/httpapi"
 	"scs/internal/identity"
 	"scs/internal/protocol"
 )
@@ -42,19 +41,12 @@ func (c *Client) Init() (*rsa.PublicKey, error) {
 		return nil, fmt.Errorf("ttp init failed: status=%d body=%s", resp.StatusCode, string(body))
 	}
 
-	var response protocol.Message
+	var response protocol.InitResponse
 	if err = json.NewDecoder(resp.Body).Decode(&response); err != nil {
 		return nil, fmt.Errorf("decode init response: %w", err)
 	}
 
-	if response.Type != "TTP_PUBLIC_KEY" {
-		return nil, fmt.Errorf("unexpected response type: %s", response.Type)
-	}
-
-	keyBase64, ok := response.Body.(string)
-	if !ok {
-		return nil, fmt.Errorf("invalid response body type: %T", response.Body)
-	}
+	keyBase64 := response.TTPEncPublicKey
 
 	key, err := identity.ParsePublicKeyFromBase64(keyBase64)
 	if err != nil {
@@ -94,26 +86,20 @@ func (c *Client) Register(req protocol.RegisterRequest) (string, error) {
 		return "", fmt.Errorf("ttp register failed: status=%d body=%s", resp.StatusCode, string(body))
 	}
 
-	var response protocol.Message
+	var response protocol.RegisterResponse
 	if err = json.NewDecoder(resp.Body).Decode(&response); err != nil {
 		return "", fmt.Errorf("decode register response: %w", err)
 	}
 
-	if response.Type != "CERTIFICATE" {
-		return "", fmt.Errorf("unexpected response type: %s", response.Type)
+	if response.Certificate == "" {
+		return "", fmt.Errorf("empty certificate in register response")
 	}
 
-	certificateBase64, ok := response.Body.(string)
-	if !ok {
-		return "", fmt.Errorf("invalid certificate body type: %T", response.Body)
-	}
-
-	return certificateBase64, nil
+	return response.Certificate, nil
 }
 
 func (c *Client) ReadMessage(msg string) (string, error) {
-	fmt.Println("#1")
-	req := httpapi.MessageRequest{
+	req := protocol.MessageRequest{
 		Body: msg,
 	}
 
@@ -121,7 +107,7 @@ func (c *Client) ReadMessage(msg string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("marshal message request: %w", err)
 	}
-	fmt.Println("#2")
+
 	httpReq, err := http.NewRequest(
 		http.MethodPost,
 		"http://"+c.addr+"/api/message",
@@ -130,7 +116,7 @@ func (c *Client) ReadMessage(msg string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("create message request: %w", err)
 	}
-	fmt.Println("#3")
+
 	httpReq.Header.Set("Content-Type", "application/json")
 
 	resp, err := http.DefaultClient.Do(httpReq)
@@ -140,17 +126,13 @@ func (c *Client) ReadMessage(msg string) (string, error) {
 	defer func() {
 		_ = resp.Body.Close()
 	}()
-	fmt.Println("#4")
-	fmt.Println(resp.StatusCode)
 	if resp.StatusCode != http.StatusOK {
 		body, _ = io.ReadAll(resp.Body)
 		return "", fmt.Errorf("ttp read message failed: status=%d body=%s", resp.StatusCode, string(body))
 	}
-	fmt.Println("#5")
-	var response httpapi.MessageResponse
+	var response protocol.MessageResponse
 	if err = json.NewDecoder(resp.Body).Decode(&response); err != nil {
 		return "", fmt.Errorf("decode message response: %w", err)
 	}
-	fmt.Println("#6")
 	return response.Body, nil
 }

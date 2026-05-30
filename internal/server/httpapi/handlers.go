@@ -3,6 +3,7 @@ package httpapi
 import (
 	"encoding/json"
 	"net/http"
+	"scs/internal/protocol"
 	"strings"
 )
 
@@ -17,7 +18,7 @@ func (s *Server) handleMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var request MessageRequest
+	var request protocol.MessageRequest
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
 		http.Error(w, "invalid request body", http.StatusBadRequest)
 		return
@@ -31,7 +32,7 @@ func (s *Server) handleMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := MessageResponse{
+	response := protocol.MessageResponse{
 		Body: strings.ToUpper(request.Body),
 	}
 
