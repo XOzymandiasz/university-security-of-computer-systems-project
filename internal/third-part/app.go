@@ -30,10 +30,6 @@ func NewAppFromEnv() (*App, error) {
 	}, nil
 }
 
-func Bootstrap() {
-
-}
-
 func (a *App) Run() error {
 	addr := ":" + a.config.Port
 

@@ -151,20 +151,22 @@ func EncryptLargePayloadWithPublicKeyBase64(data []byte, pub *rsa.PublicKey) (st
 		return "", err
 	}
 
-	gcm, err := cipher.NewGCM(block)
+	var gcm cipher.AEAD
+	gcm, err = cipher.NewGCM(block)
 	if err != nil {
 		return "", err
 	}
 
 	nonce := make([]byte, gcm.NonceSize())
 
-	if _, err := rand.Read(nonce); err != nil {
+	if _, err = rand.Read(nonce); err != nil {
 		return "", err
 	}
 
 	ciphertext := gcm.Seal(nil, nonce, data, nil)
 
-	encryptedKey, err := rsa.EncryptOAEP(
+	var encryptedKey []byte
+	encryptedKey, err = rsa.EncryptOAEP(
 		sha256.New(),
 		rand.Reader,
 		pub,
@@ -181,7 +183,8 @@ func EncryptLargePayloadWithPublicKeyBase64(data []byte, pub *rsa.PublicKey) (st
 		Ciphertext:   base64.StdEncoding.EncodeToString(ciphertext),
 	}
 
-	payloadBytes, err := json.Marshal(payload)
+	var payloadBytes []byte
+	payloadBytes, err = json.Marshal(payload)
 	if err != nil {
 		return "", err
 	}
@@ -196,26 +199,30 @@ func DecryptLargePayloadWithPrivateKeyBase64(encoded string, privateKey *rsa.Pri
 	}
 
 	var payload HybridEncryptedPayload
-	if err := json.Unmarshal(payloadBytes, &payload); err != nil {
+	if err = json.Unmarshal(payloadBytes, &payload); err != nil {
 		return nil, err
 	}
 
-	encryptedKey, err := base64.StdEncoding.DecodeString(payload.EncryptedKey)
+	var encryptedKey []byte
+	encryptedKey, err = base64.StdEncoding.DecodeString(payload.EncryptedKey)
 	if err != nil {
 		return nil, err
 	}
 
-	nonce, err := base64.StdEncoding.DecodeString(payload.Nonce)
+	var nonce []byte
+	nonce, err = base64.StdEncoding.DecodeString(payload.Nonce)
 	if err != nil {
 		return nil, err
 	}
 
-	ciphertext, err := base64.StdEncoding.DecodeString(payload.Ciphertext)
+	var ciphertext []byte
+	ciphertext, err = base64.StdEncoding.DecodeString(payload.Ciphertext)
 	if err != nil {
 		return nil, err
 	}
 
-	aesKey, err := rsa.DecryptOAEP(
+	var aesKey []byte
+	aesKey, err = rsa.DecryptOAEP(
 		sha256.New(),
 		rand.Reader,
 		privateKey,
@@ -226,17 +233,20 @@ func DecryptLargePayloadWithPrivateKeyBase64(encoded string, privateKey *rsa.Pri
 		return nil, err
 	}
 
-	block, err := aes.NewCipher(aesKey)
+	var block cipher.Block
+	block, err = aes.NewCipher(aesKey)
 	if err != nil {
 		return nil, err
 	}
 
-	gcm, err := cipher.NewGCM(block)
+	var gcm cipher.AEAD
+	gcm, err = cipher.NewGCM(block)
 	if err != nil {
 		return nil, err
 	}
 
-	plaintext, err := gcm.Open(nil, nonce, ciphertext, nil)
+	var plaintext []byte
+	plaintext, err = gcm.Open(nil, nonce, ciphertext, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -288,7 +298,8 @@ func EncryptWithSessionKeyBase64(plaintext []byte, sessionKey []byte) (string, e
 		return "", err
 	}
 
-	gcm, err := cipher.NewGCM(block)
+	var gcm cipher.AEAD
+	gcm, err = cipher.NewGCM(block)
 	if err != nil {
 		return "", err
 	}
@@ -305,7 +316,8 @@ func EncryptWithSessionKeyBase64(plaintext []byte, sessionKey []byte) (string, e
 		Ciphertext: base64.StdEncoding.EncodeToString(ciphertext),
 	}
 
-	payloadBytes, err := json.Marshal(payload)
+	var payloadBytes []byte
+	payloadBytes, err = json.Marshal(payload)
 	if err != nil {
 		return "", err
 	}
@@ -328,22 +340,26 @@ func DecryptWithSessionKeyBase64(encoded string, sessionKey []byte) ([]byte, err
 		return nil, err
 	}
 
-	nonce, err := base64.StdEncoding.DecodeString(payload.Nonce)
+	var nonce []byte
+	nonce, err = base64.StdEncoding.DecodeString(payload.Nonce)
 	if err != nil {
 		return nil, err
 	}
 
-	ciphertext, err := base64.StdEncoding.DecodeString(payload.Ciphertext)
+	var ciphertext []byte
+	ciphertext, err = base64.StdEncoding.DecodeString(payload.Ciphertext)
 	if err != nil {
 		return nil, err
 	}
 
-	block, err := aes.NewCipher(sessionKey)
+	var block cipher.Block
+	block, err = aes.NewCipher(sessionKey)
 	if err != nil {
 		return nil, err
 	}
 
-	gcm, err := cipher.NewGCM(block)
+	var gcm cipher.AEAD
+	gcm, err = cipher.NewGCM(block)
 	if err != nil {
 		return nil, err
 	}
@@ -380,7 +396,8 @@ func ValidateCertificateBase64(
 		return fmt.Errorf("invalid certificate subject: got=%s expected=%s", cert.Subject.CommonName, expectedSubjectID)
 	}
 
-	expectedPublicKey, err := ParsePublicKeyFromBase64(expectedPublicKeyBase64)
+	var expectedPublicKey *rsa.PublicKey
+	expectedPublicKey, err = ParsePublicKeyFromBase64(expectedPublicKeyBase64)
 	if err != nil {
 		return fmt.Errorf("parse expected public key: %w", err)
 	}

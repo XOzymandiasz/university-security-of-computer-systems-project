@@ -17,7 +17,6 @@ RUN addgroup -S app && adduser -S app -G app
 WORKDIR /app
 
 COPY --from=builder /out/server /app/server
-COPY --from=builder /app/cmd/server/message /app/message
 
 USER app
 

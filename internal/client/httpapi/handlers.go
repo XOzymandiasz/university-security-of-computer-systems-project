@@ -2,7 +2,6 @@ package httpapi
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
 	"scs/internal/identity"
 	"scs/internal/protocol"
@@ -59,7 +58,6 @@ func (s *Server) handleAuthenticate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := s.authenticate.Authenticate(); err != nil {
-		log.Println("client authenticate failed:", err)
 		http.Error(w, "authentication failed: "+err.Error(), http.StatusUnauthorized)
 		return
 	}

@@ -69,13 +69,6 @@ func LoadSessionKey(baseDir string) ([]byte, error) {
 	return base64.StdEncoding.DecodeString(string(data))
 }
 
-func HasCertificate(baseDir string) bool {
-	path := filepath.Join(baseDir, certFileName)
-
-	_, err := os.Stat(path)
-	return err == nil
-}
-
 func SaveCertificate(baseDir string, certificateBase64 string) error {
 	if err := os.MkdirAll(baseDir, 0700); err != nil {
 		return err

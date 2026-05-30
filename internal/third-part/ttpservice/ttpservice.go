@@ -1,6 +1,7 @@
 package ttpservice
 
 import (
+	"crypto/rsa"
 	"encoding/json"
 	"fmt"
 	"path/filepath"
@@ -34,22 +35,26 @@ func (s *Service) Register(reg protocol.RegisterRequest) (protocol.RegisterRespo
 		return protocol.RegisterResponse{}, err
 	}
 
-	decryptedIDBytes, err := identity.DecryptWithPrivateKeyBase64(reg.EncryptedID, ttpEncPrivateKey)
+	var decryptedIDBytes []byte
+	decryptedIDBytes, err = identity.DecryptWithPrivateKeyBase64(reg.EncryptedID, ttpEncPrivateKey)
 	if err != nil {
 		return protocol.RegisterResponse{}, err
 	}
 
-	userAuthPublicKey, err := identity.ParsePublicKeyFromBase64(reg.AuthPublicKey)
+	var userAuthPublicKey *rsa.PublicKey
+	userAuthPublicKey, err = identity.ParsePublicKeyFromBase64(reg.AuthPublicKey)
 	if err != nil {
 		return protocol.RegisterResponse{}, err
 	}
 
-	ttpAuthPrivateKey, err := identity.LoadPrivateKey(filepath.Join(s.baseDir, "auth.key"))
+	var ttpAuthPrivateKey *rsa.PrivateKey
+	ttpAuthPrivateKey, err = identity.LoadPrivateKey(filepath.Join(s.baseDir, "auth.key"))
 	if err != nil {
 		return protocol.RegisterResponse{}, err
 	}
 
-	certificateBase64, err := identity.CreateCertificateBase64(
+	var certificateBase64 string
+	certificateBase64, err = identity.CreateCertificateBase64(
 		string(decryptedIDBytes),
 		userAuthPublicKey,
 		ttpAuthPrivateKey,
@@ -92,7 +97,8 @@ func (s *Service) Authenticate(req protocol.AuthenticateRequest) (protocol.Authe
 		return protocol.AuthenticateResponse{}, fmt.Errorf("entity is not server")
 	}
 
-	ttpAuthPrivateKey, err := identity.LoadPrivateKey(filepath.Join(s.baseDir, "auth.key"))
+	var ttpAuthPrivateKey *rsa.PrivateKey
+	ttpAuthPrivateKey, err = identity.LoadPrivateKey(filepath.Join(s.baseDir, "auth.key"))
 	if err != nil {
 		return protocol.AuthenticateResponse{}, fmt.Errorf("load ttp auth private key: %w", err)
 	}
@@ -106,7 +112,8 @@ func (s *Service) Authenticate(req protocol.AuthenticateRequest) (protocol.Authe
 		return protocol.AuthenticateResponse{}, fmt.Errorf("invalid server certificate: %w", err)
 	}
 
-	serverAuthPublicKey, err := identity.ParsePublicKeyFromBase64(serverEntity.AuthPublicKey)
+	var serverAuthPublicKey *rsa.PublicKey
+	serverAuthPublicKey, err = identity.ParsePublicKeyFromBase64(serverEntity.AuthPublicKey)
 	if err != nil {
 		return protocol.AuthenticateResponse{}, fmt.Errorf("parse server auth public key: %w", err)
 	}
@@ -115,7 +122,8 @@ func (s *Service) Authenticate(req protocol.AuthenticateRequest) (protocol.Authe
 		return protocol.AuthenticateResponse{}, fmt.Errorf("invalid server signature: %w", err)
 	}
 
-	clientPayloadBytes, err := identity.DecryptLargePayloadWithPrivateKeyBase64(
+	var clientPayloadBytes []byte
+	clientPayloadBytes, err = identity.DecryptLargePayloadWithPrivateKeyBase64(
 		req.ClientEncryptedPayload,
 		ttpEncPrivateKey,
 	)
@@ -128,7 +136,8 @@ func (s *Service) Authenticate(req protocol.AuthenticateRequest) (protocol.Authe
 		return protocol.AuthenticateResponse{}, fmt.Errorf("decode client payload: %w", err)
 	}
 
-	clientEntity, exists := s.entries[clientPayload.ClientID]
+	var clientEntity RegisteredEntity
+	clientEntity, exists = s.entries[clientPayload.ClientID]
 	if !exists {
 		return protocol.AuthenticateResponse{}, fmt.Errorf("client not registered")
 	}
@@ -146,7 +155,8 @@ func (s *Service) Authenticate(req protocol.AuthenticateRequest) (protocol.Authe
 		return protocol.AuthenticateResponse{}, fmt.Errorf("invalid client certificate: %w", err)
 	}
 
-	clientAuthPublicKey, err := identity.ParsePublicKeyFromBase64(clientEntity.AuthPublicKey)
+	var clientAuthPublicKey *rsa.PublicKey
+	clientAuthPublicKey, err = identity.ParsePublicKeyFromBase64(clientEntity.AuthPublicKey)
 	if err != nil {
 		return protocol.AuthenticateResponse{}, fmt.Errorf("parse client auth public key: %w", err)
 	}
@@ -155,27 +165,32 @@ func (s *Service) Authenticate(req protocol.AuthenticateRequest) (protocol.Authe
 		return protocol.AuthenticateResponse{}, fmt.Errorf("invalid client signature: %w", err)
 	}
 
-	sessionKey, err := identity.GenerateRandomBytes(32)
+	var sessionKey []byte
+	sessionKey, err = identity.GenerateRandomBytes(32)
 	if err != nil {
 		return protocol.AuthenticateResponse{}, fmt.Errorf("generate session key: %w", err)
 	}
 
-	clientEncPublicKey, err := identity.ParsePublicKeyFromBase64(clientEntity.EncPublicKey)
+	var clientEncPublicKey *rsa.PublicKey
+	clientEncPublicKey, err = identity.ParsePublicKeyFromBase64(clientEntity.EncPublicKey)
 	if err != nil {
 		return protocol.AuthenticateResponse{}, fmt.Errorf("parse client enc public key: %w", err)
 	}
 
-	encryptedSessionKeyForClient, err := identity.EncryptWithPublicKeyBase64(sessionKey, clientEncPublicKey)
+	var encryptedSessionKeyForClient string
+	encryptedSessionKeyForClient, err = identity.EncryptWithPublicKeyBase64(sessionKey, clientEncPublicKey)
 	if err != nil {
 		return protocol.AuthenticateResponse{}, fmt.Errorf("encrypt session key for client: %w", err)
 	}
 
-	serverEncPublicKey, err := identity.ParsePublicKeyFromBase64(serverEntity.EncPublicKey)
+	var serverEncPublicKey *rsa.PublicKey
+	serverEncPublicKey, err = identity.ParsePublicKeyFromBase64(serverEntity.EncPublicKey)
 	if err != nil {
 		return protocol.AuthenticateResponse{}, fmt.Errorf("parse server enc public key: %w", err)
 	}
 
-	encryptedSessionKeyForServer, err := identity.EncryptWithPublicKeyBase64(sessionKey, serverEncPublicKey)
+	var encryptedSessionKeyForServer string
+	encryptedSessionKeyForServer, err = identity.EncryptWithPublicKeyBase64(sessionKey, serverEncPublicKey)
 	if err != nil {
 		return protocol.AuthenticateResponse{}, fmt.Errorf("encrypt session key for server: %w", err)
 	}

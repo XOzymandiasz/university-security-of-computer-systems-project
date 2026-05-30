@@ -48,7 +48,8 @@ func (c *Client) Init() (*rsa.PublicKey, error) {
 
 	keyBase64 := response.TTPEncPublicKey
 
-	key, err := identity.ParsePublicKeyFromBase64(keyBase64)
+	var key *rsa.PublicKey
+	key, err = identity.ParsePublicKeyFromBase64(keyBase64)
 	if err != nil {
 		return nil, fmt.Errorf("parse public key: %w", err)
 	}
@@ -62,7 +63,8 @@ func (c *Client) Register(req protocol.RegisterRequest) (string, error) {
 		return "", fmt.Errorf("marshal register request: %w", err)
 	}
 
-	httpReq, err := http.NewRequest(
+	var httpReq *http.Request
+	httpReq, err = http.NewRequest(
 		http.MethodPost,
 		"http://"+c.addr+"/api/register",
 		bytes.NewReader(body),
@@ -73,7 +75,8 @@ func (c *Client) Register(req protocol.RegisterRequest) (string, error) {
 
 	httpReq.Header.Set("Content-Type", "application/json")
 
-	resp, err := http.DefaultClient.Do(httpReq)
+	var resp *http.Response
+	resp, err = http.DefaultClient.Do(httpReq)
 	if err != nil {
 		return "", fmt.Errorf("ttp register request: %w", err)
 	}
@@ -104,7 +107,8 @@ func (c *Client) Authenticate(req protocol.AuthenticateRequest) (protocol.Authen
 		return protocol.AuthenticateResponse{}, fmt.Errorf("marshal ttp authenticate request: %w", err)
 	}
 
-	httpReq, err := http.NewRequest(
+	var httpReq *http.Request
+	httpReq, err = http.NewRequest(
 		http.MethodPost,
 		"http://"+c.addr+"/api/authenticate",
 		bytes.NewReader(body),
@@ -115,7 +119,8 @@ func (c *Client) Authenticate(req protocol.AuthenticateRequest) (protocol.Authen
 
 	httpReq.Header.Set("Content-Type", "application/json")
 
-	resp, err := http.DefaultClient.Do(httpReq)
+	var resp *http.Response
+	resp, err = http.DefaultClient.Do(httpReq)
 	if err != nil {
 		return protocol.AuthenticateResponse{}, fmt.Errorf("ttp authenticate request: %w", err)
 	}
