@@ -84,9 +84,13 @@ func (s *Server) handleAuthenticate(writer http.ResponseWriter, request *http.Re
 		return
 	}
 
-	serverData := identity.LoadRegistrationData(s.baseDir)
+	serverData, err := identity.LoadRegistrationData(s.baseDir)
+	if err != nil {
+		http.Error(writer, "server is not authenticated - missing session key: "+err.Error(), http.StatusUnauthorized)
+	}
 
-	serverCertificate, err := identity.LoadCertificate(s.baseDir)
+	var serverCertificate string
+	serverCertificate, err = identity.LoadCertificate(s.baseDir)
 	if err != nil {
 		http.Error(writer, "load server certificate: "+err.Error(), http.StatusInternalServerError)
 		return

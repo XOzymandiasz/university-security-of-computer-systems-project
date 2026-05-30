@@ -42,7 +42,11 @@ func (a *Authenticate) Authenticate() error {
 		return fmt.Errorf("ttp init: %w", err)
 	}
 
-	clientData := identity.LoadRegistrationData(a.baseDir)
+	clientData, err := identity.LoadRegistrationData(a.baseDir)
+
+	if err != nil {
+		return fmt.Errorf("load registration data: %w", err)
+	}
 
 	var clientCertificate string
 	clientCertificate, err = identity.LoadCertificate(a.baseDir)

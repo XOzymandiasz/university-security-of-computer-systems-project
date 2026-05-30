@@ -47,9 +47,17 @@ func (a *App) Bootstrap() error {
 		return fmt.Errorf("ttp init: %w", err)
 	}
 
-	identity.EnsureIdentity(a.config.BaseDir)
+	err = identity.EnsureIdentity(a.config.BaseDir)
+	if err != nil {
+		return err
+	}
 
-	data := identity.LoadRegistrationData(a.config.BaseDir)
+	var data protocol.RegisterRequest
+	data, err = identity.LoadRegistrationData(a.config.BaseDir)
+
+	if err != nil {
+		return fmt.Errorf("load registration data: %w", err)
+	}
 
 	var encryptedID string
 	encryptedID, err = identity.EncryptWithPublicKeyBase64([]byte(data.EncryptedID), ttpPublicKey)

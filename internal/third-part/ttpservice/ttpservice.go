@@ -22,7 +22,11 @@ func New(baseDir string) *Service {
 }
 
 func (s *Service) Init() (protocol.InitResponse, error) {
-	responseData := identity.LoadRegistrationData(s.baseDir)
+	responseData, err := identity.LoadRegistrationData(s.baseDir)
+
+	if err != nil {
+		fmt.Println(err)
+	}
 
 	return protocol.InitResponse{
 		TTPEncPublicKey: responseData.EncPublicKey,
@@ -54,7 +58,7 @@ func (s *Service) Register(reg protocol.RegisterRequest) (protocol.RegisterRespo
 	}
 
 	var certificateBase64 string
-	certificateBase64, err = identity.CreateCertificateBase64(
+	certificateBase64, err = CreateCertificateBase64(
 		string(decryptedIDBytes),
 		userAuthPublicKey,
 		ttpAuthPrivateKey,
@@ -103,7 +107,7 @@ func (s *Service) Authenticate(req protocol.AuthenticateRequest) (protocol.Authe
 		return protocol.AuthenticateResponse{}, fmt.Errorf("load ttp auth private key: %w", err)
 	}
 
-	if err = identity.ValidateCertificateBase64(
+	if err = ValidateCertificateBase64(
 		req.ServerCertificate,
 		serverEntity.ID,
 		serverEntity.AuthPublicKey,
@@ -118,12 +122,12 @@ func (s *Service) Authenticate(req protocol.AuthenticateRequest) (protocol.Authe
 		return protocol.AuthenticateResponse{}, fmt.Errorf("parse server auth public key: %w", err)
 	}
 
-	if err = identity.VerifySignatureBase64([]byte(req.ServerID), req.ServerSignature, serverAuthPublicKey); err != nil {
+	if err = VerifySignatureBase64([]byte(req.ServerID), req.ServerSignature, serverAuthPublicKey); err != nil {
 		return protocol.AuthenticateResponse{}, fmt.Errorf("invalid server signature: %w", err)
 	}
 
 	var clientPayloadBytes []byte
-	clientPayloadBytes, err = identity.DecryptLargePayloadWithPrivateKeyBase64(
+	clientPayloadBytes, err = DecryptLargePayloadWithPrivateKeyBase64(
 		req.ClientEncryptedPayload,
 		ttpEncPrivateKey,
 	)
@@ -146,7 +150,7 @@ func (s *Service) Authenticate(req protocol.AuthenticateRequest) (protocol.Authe
 		return protocol.AuthenticateResponse{}, fmt.Errorf("entity is not client")
 	}
 
-	if err = identity.ValidateCertificateBase64(
+	if err = ValidateCertificateBase64(
 		clientPayload.ClientCertificate,
 		clientEntity.ID,
 		clientEntity.AuthPublicKey,
@@ -161,7 +165,7 @@ func (s *Service) Authenticate(req protocol.AuthenticateRequest) (protocol.Authe
 		return protocol.AuthenticateResponse{}, fmt.Errorf("parse client auth public key: %w", err)
 	}
 
-	if err = identity.VerifySignatureBase64([]byte(clientPayload.ClientID), clientPayload.ClientSignature, clientAuthPublicKey); err != nil {
+	if err = VerifySignatureBase64([]byte(clientPayload.ClientID), clientPayload.ClientSignature, clientAuthPublicKey); err != nil {
 		return protocol.AuthenticateResponse{}, fmt.Errorf("invalid client signature: %w", err)
 	}
 
