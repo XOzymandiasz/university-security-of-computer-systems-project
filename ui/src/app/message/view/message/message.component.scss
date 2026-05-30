@@ -12,6 +12,8 @@ $button-bg: #fd5ff0;
 $button-hover-bg: #f8b6f2;
 
 $error-color: #f92672;
+$login-bg: #fd971f;
+$login-hover-bg: #e6db74;
 
 .message-card {
   width: min(480px, calc(100vw - 32px));
@@ -107,13 +109,12 @@ $error-color: #f92672;
   font-weight: 700;
 }
 
-.message-button {
+%button-base {
   width: 100%;
   margin-top: 20px;
   padding: 12px 16px;
   border: none;
   border-radius: 12px;
-  background: $button-bg;
   color: $text-main;
   font-size: 15px;
   font-weight: 700;
@@ -123,22 +124,50 @@ $error-color: #f92672;
     transform 0.15s ease,
     box-shadow 0.15s ease,
     opacity 0.15s ease;
-  box-shadow: 0 6px 18px rgba(249, 38, 114, 0.35);
 
   &:hover:not(:disabled) {
-    background: $button-hover-bg;
     transform: translateY(-1px);
-    box-shadow: 0 8px 22px rgba(253, 95, 240, 0.35);
   }
 
   &:active:not(:disabled) {
     transform: translateY(0);
-    box-shadow: 0 4px 12px rgba(249, 38, 114, 0.25);
   }
 
   &:disabled {
     cursor: not-allowed;
     opacity: 0.55;
     box-shadow: none;
+  }
+}
+
+.message-button {
+  @extend %button-base;
+
+  background: $button-bg;
+  box-shadow: 0 6px 18px rgba(249, 38, 114, 0.35);
+
+  &:hover:not(:disabled) {
+    background: $button-hover-bg;
+    box-shadow: 0 8px 22px rgba(253, 95, 240, 0.35);
+  }
+
+  &:active:not(:disabled) {
+    box-shadow: 0 4px 12px rgba(249, 38, 114, 0.25);
+  }
+}
+
+.login-button {
+  @extend %button-base;
+
+  background: $login-bg;
+  box-shadow: 0 6px 18px rgba(253, 151, 31, 0.35);
+
+  &:hover:not(:disabled) {
+    background: $login-hover-bg;
+    box-shadow: 0 8px 22px rgba(253, 151, 31, 0.35);
+  }
+
+  &:active:not(:disabled) {
+    box-shadow: 0 4px 12px rgba(253, 151, 31, 0.25);
   }
 }

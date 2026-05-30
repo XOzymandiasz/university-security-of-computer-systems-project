@@ -21,7 +21,7 @@ func NewAppFromEnv() (*App, error) {
 
 	identity.EnsureIdentity(cfg.BaseDir)
 
-	ttpService := ttpservice.New(defaultBaseDir)
+	ttpService := ttpservice.New(cfg.BaseDir)
 
 	api := httpapi.New(ttpService)
 	return &App{

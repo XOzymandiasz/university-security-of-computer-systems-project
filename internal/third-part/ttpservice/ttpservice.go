@@ -1,6 +1,8 @@
 package ttpservice
 
 import (
+	"encoding/json"
+	"fmt"
 	"path/filepath"
 	"scs/internal/identity"
 	"scs/internal/protocol"
@@ -8,11 +10,13 @@ import (
 
 type Service struct {
 	baseDir string
+	entries map[string]RegisteredEntity
 }
 
 func New(baseDir string) *Service {
 	return &Service{
 		baseDir: baseDir,
+		entries: make(map[string]RegisteredEntity),
 	}
 }
 
@@ -54,7 +58,99 @@ func (s *Service) Register(reg protocol.RegisterRequest) (protocol.RegisterRespo
 		return protocol.RegisterResponse{}, err
 	}
 
+	entityID := string(decryptedIDBytes)
+
+	if _, exists := s.entries[entityID]; exists {
+		return protocol.RegisterResponse{}, fmt.Errorf("entity already registered")
+	}
+
+	s.entries[entityID] = RegisteredEntity{
+		ID:            entityID,
+		Role:          string(reg.Role),
+		EncPublicKey:  reg.EncPublicKey,
+		AuthPublicKey: reg.AuthPublicKey,
+		Certificate:   certificateBase64,
+	}
+
 	return protocol.RegisterResponse{
 		Certificate: certificateBase64,
+	}, nil
+}
+
+func (s *Service) Authenticate(req protocol.AuthenticateRequest) (protocol.AuthenticateResponse, error) {
+	ttpEncPrivateKey, err := identity.LoadPrivateKey(filepath.Join(s.baseDir, "enc.key"))
+	if err != nil {
+		return protocol.AuthenticateResponse{}, fmt.Errorf("load ttp enc private key: %w", err)
+	}
+
+	serverEntity, exists := s.entries[req.ServerID]
+	if !exists {
+		return protocol.AuthenticateResponse{}, fmt.Errorf("server not registered")
+	}
+
+	if serverEntity.Role != string(protocol.EntityRoleServer) {
+		return protocol.AuthenticateResponse{}, fmt.Errorf("entity is not server")
+	}
+
+	if req.ServerCertificate != serverEntity.Certificate {
+		return protocol.AuthenticateResponse{}, fmt.Errorf("invalid server certificate")
+	}
+
+	clientPayloadBytes, err := identity.DecryptLargePayloadWithPrivateKeyBase64(
+		req.ClientEncryptedPayload,
+		ttpEncPrivateKey,
+	)
+	if err != nil {
+		return protocol.AuthenticateResponse{}, fmt.Errorf("decrypt client payload: %w", err)
+	}
+
+	var clientPayload protocol.AuthenticateClientPayload
+	if err = json.Unmarshal(clientPayloadBytes, &clientPayload); err != nil {
+		return protocol.AuthenticateResponse{}, fmt.Errorf("decode client payload: %w", err)
+	}
+
+	clientEntity, exists := s.entries[clientPayload.ClientID]
+	if !exists {
+		return protocol.AuthenticateResponse{}, fmt.Errorf("client not registered")
+	}
+
+	if clientEntity.Role != string(protocol.EntityRoleClient) {
+		return protocol.AuthenticateResponse{}, fmt.Errorf("entity is not client")
+	}
+
+	if clientPayload.ClientCertificate != clientEntity.Certificate {
+		return protocol.AuthenticateResponse{}, fmt.Errorf("invalid client certificate")
+	}
+
+	sessionKey, err := identity.GenerateRandomBytes(32)
+	if err != nil {
+		return protocol.AuthenticateResponse{}, fmt.Errorf("generate session key: %w", err)
+	}
+
+	clientEncPublicKey, err := identity.ParsePublicKeyFromBase64(clientEntity.EncPublicKey)
+	if err != nil {
+		return protocol.AuthenticateResponse{}, fmt.Errorf("parse client enc public key: %w", err)
+	}
+
+	encryptedSessionKeyForClient, err := identity.EncryptWithPublicKeyBase64(sessionKey, clientEncPublicKey)
+	if err != nil {
+		return protocol.AuthenticateResponse{}, fmt.Errorf("encrypt session key for client: %w", err)
+	}
+
+	serverEncPublicKey, err := identity.ParsePublicKeyFromBase64(serverEntity.EncPublicKey)
+	if err != nil {
+		return protocol.AuthenticateResponse{}, fmt.Errorf("parse server enc public key: %w", err)
+	}
+
+	encryptedSessionKeyForServer, err := identity.EncryptWithPublicKeyBase64(sessionKey, serverEncPublicKey)
+	if err != nil {
+		return protocol.AuthenticateResponse{}, fmt.Errorf("encrypt session key for server: %w", err)
+	}
+
+	return protocol.AuthenticateResponse{
+		OK:                           true,
+		EncryptedSessionKeyForClient: encryptedSessionKeyForClient,
+		EncryptedSessionKeyForServer: encryptedSessionKeyForServer,
+		Message:                      "authenticated",
 	}, nil
 }

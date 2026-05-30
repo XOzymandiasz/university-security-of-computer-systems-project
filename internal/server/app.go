@@ -24,7 +24,7 @@ func NewAppFromEnv() (*App, error) {
 
 	ttpClient := serverclient.New(cfg.TTPAddr)
 
-	api := httpapi.New(cfg.MessagePath)
+	api := httpapi.New(cfg.MessagePath, cfg.BaseDir, ttpClient)
 
 	return &App{
 		config:    cfg,

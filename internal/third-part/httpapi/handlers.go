@@ -56,3 +56,30 @@ func (s *Server) handleRegister(w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 	}
 }
+
+func (s *Server) handleAuthentication(writer http.ResponseWriter, request *http.Request) {
+	if request.Method != http.MethodPost {
+		http.Error(writer, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req protocol.AuthenticateRequest
+	if err := json.NewDecoder(request.Body).Decode(&req); err != nil {
+		http.Error(writer, "invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	msg, err := s.ttp.Authenticate(req)
+	if err != nil {
+		http.Error(writer, err.Error(), http.StatusUnauthorized)
+		return
+	}
+
+	writer.Header().Set("Content-Type", "application/json")
+	writer.WriteHeader(http.StatusOK)
+
+	if err = json.NewEncoder(writer).Encode(msg); err != nil {
+		http.Error(writer, "encode response", http.StatusInternalServerError)
+		return
+	}
+}

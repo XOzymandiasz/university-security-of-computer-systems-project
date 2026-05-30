@@ -10,10 +10,3 @@ type RegisterRequest struct {
 type RegisterResponse struct {
 	Certificate string `json:"certificate"`
 }
-
-type EntityRole string
-
-const (
-	EntityRoleClient EntityRole = "CLIENT"
-	EntityRoleServer EntityRole = "SERVER"
-)

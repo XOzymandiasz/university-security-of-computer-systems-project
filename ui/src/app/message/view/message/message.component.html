@@ -4,6 +4,15 @@
     <p>Enter a message and send it to the server.</p>
   </div>
 
+  <button
+    class="login-button"
+    type="button"
+    [disabled]="loading() || authenticated()"
+    (click)="authenticate()"
+  >
+    {{ authenticated() ? 'Authenticated' : 'Login' }}
+  </button>
+
   <form class="message-form" (submit)="sendMessage($event)">
     <label class="message-label" for="messageInput">
       Message

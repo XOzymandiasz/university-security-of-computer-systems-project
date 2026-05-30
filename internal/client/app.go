@@ -29,8 +29,9 @@ func NewAppFromEnv() (*App, error) {
 	ttpClient := serverclient.New(cfg.TTPAddr)
 
 	readMessage := usecase.NewReadMessage(serverClient)
+	authenticate := usecase.NewAuthenticate(cfg.BaseDir, serverClient, ttpClient)
 
-	api := httpapi.New(readMessage)
+	api := httpapi.New(readMessage, authenticate)
 
 	return &App{
 		config:       cfg,

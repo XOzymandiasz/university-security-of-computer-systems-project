@@ -97,3 +97,57 @@ func (c *Client) Register(req protocol.RegisterRequest) (string, error) {
 
 	return response.Certificate, nil
 }
+
+func (c *Client) Authenticate(req protocol.AuthenticateRequest) (protocol.AuthenticateResponse, error) {
+	body, err := json.Marshal(req)
+	if err != nil {
+		return protocol.AuthenticateResponse{}, fmt.Errorf("marshal ttp authenticate request: %w", err)
+	}
+
+	httpReq, err := http.NewRequest(
+		http.MethodPost,
+		"http://"+c.addr+"/api/authenticate",
+		bytes.NewReader(body),
+	)
+	if err != nil {
+		return protocol.AuthenticateResponse{}, fmt.Errorf("create ttp authenticate request: %w", err)
+	}
+
+	httpReq.Header.Set("Content-Type", "application/json")
+
+	resp, err := http.DefaultClient.Do(httpReq)
+	if err != nil {
+		return protocol.AuthenticateResponse{}, fmt.Errorf("ttp authenticate request: %w", err)
+	}
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+
+	if resp.StatusCode != http.StatusOK {
+		respBody, _ := io.ReadAll(resp.Body)
+		return protocol.AuthenticateResponse{}, fmt.Errorf(
+			"ttp authenticate failed: status=%d body=%s",
+			resp.StatusCode,
+			string(respBody),
+		)
+	}
+
+	var response protocol.AuthenticateResponse
+	if err = json.NewDecoder(resp.Body).Decode(&response); err != nil {
+		return protocol.AuthenticateResponse{}, fmt.Errorf("decode ttp authenticate response: %w", err)
+	}
+
+	if !response.OK {
+		return protocol.AuthenticateResponse{}, fmt.Errorf("authentication rejected: %s", response.Message)
+	}
+
+	if response.EncryptedSessionKeyForClient == "" {
+		return protocol.AuthenticateResponse{}, fmt.Errorf("empty encrypted session key for client")
+	}
+
+	if response.EncryptedSessionKeyForServer == "" {
+		return protocol.AuthenticateResponse{}, fmt.Errorf("empty encrypted session key for server")
+	}
+
+	return response, nil
+}

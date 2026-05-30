@@ -2,6 +2,7 @@ package httpapi
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"scs/internal/protocol"
 )
@@ -42,5 +43,26 @@ func (s *Server) handleMessage(w http.ResponseWriter, r *http.Request) {
 
 	_ = json.NewEncoder(w).Encode(protocol.MessageResponse{
 		Body: text,
+	})
+}
+
+func (s *Server) handleAuthenticate(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	if err := s.authenticate.Authenticate(); err != nil {
+		log.Println("client authenticate failed:", err)
+		http.Error(w, "authentication failed: "+err.Error(), http.StatusUnauthorized)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	_ = json.NewEncoder(w).Encode(map[string]any{
+		"ok":      true,
+		"message": "authenticated",
 	})
 }

@@ -21,6 +21,44 @@ var authFileName = "auth.key"
 var encFileName = "enc.key"
 var certFileName = "cert.key"
 
+func GenerateRandomBytes(size int) ([]byte, error) {
+	data := make([]byte, size)
+
+	if _, err := rand.Read(data); err != nil {
+		return nil, err
+	}
+
+	return data, nil
+}
+
+func LoadCertificate(baseDir string) (string, error) {
+	data, err := os.ReadFile(filepath.Join(baseDir, certFileName))
+	if err != nil {
+		return "", err
+	}
+
+	return string(data), nil
+}
+
+func SaveSessionKey(baseDir string, sessionKey []byte) error {
+	if err := os.MkdirAll(baseDir, 0700); err != nil {
+		return err
+	}
+
+	encoded := base64.StdEncoding.EncodeToString(sessionKey)
+
+	return os.WriteFile(filepath.Join(baseDir, "session.key"), []byte(encoded), 0600)
+}
+
+func LoadSessionKey(baseDir string) ([]byte, error) {
+	data, err := os.ReadFile(filepath.Join(baseDir, "session.key"))
+	if err != nil {
+		return nil, err
+	}
+
+	return base64.StdEncoding.DecodeString(string(data))
+}
+
 func HasCertificate(baseDir string) bool {
 	path := filepath.Join(baseDir, certFileName)
 

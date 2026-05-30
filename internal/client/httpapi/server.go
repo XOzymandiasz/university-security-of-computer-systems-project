@@ -1,20 +1,27 @@
 package httpapi
 
-import (
-	"net/http"
-)
+import "net/http"
 
 type ReadMessageUseCase interface {
 	ReadMessage(msg string) (string, error)
 }
 
-type Server struct {
-	readMessage ReadMessageUseCase
+type AuthenticateUseCase interface {
+	Authenticate() error
 }
 
-func New(readMessage ReadMessageUseCase) *Server {
+type Server struct {
+	readMessage  ReadMessageUseCase
+	authenticate AuthenticateUseCase
+}
+
+func New(
+	readMessage ReadMessageUseCase,
+	authenticate AuthenticateUseCase,
+) *Server {
 	return &Server{
-		readMessage: readMessage,
+		readMessage:  readMessage,
+		authenticate: authenticate,
 	}
 }
 
@@ -23,6 +30,7 @@ func (s *Server) Handler() http.Handler {
 
 	mux.HandleFunc("/health", s.handleHealth)
 	mux.HandleFunc("/api/message", s.handleMessage)
+	mux.HandleFunc("/api/authenticate", s.handleAuthenticate)
 
 	return mux
 }

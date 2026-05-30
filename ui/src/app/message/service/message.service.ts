@@ -11,6 +11,10 @@ import {MessageRequestModel} from '../model/messageRequest.model';
 export class MessageService {
   private readonly http = inject(HttpClient);
 
+  authenticate(): Observable<{ ok: boolean; message: string }> {
+    return this.http.post<{ ok: boolean; message: string }>('/api/authenticate', {});
+  }
+
   sendMessage(request: MessageRequestModel): Observable<MessageResponseModel> {
     return this.http.post<MessageResponseModel>('/api/message', request);
   }

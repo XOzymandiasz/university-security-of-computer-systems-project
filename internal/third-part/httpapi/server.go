@@ -6,8 +6,9 @@ import (
 )
 
 type TTPService interface {
-	Init() (protocol.Message, error)
-	Register(req protocol.RegisterRequest) (protocol.Message, error)
+	Init() (protocol.InitResponse, error)
+	Register(req protocol.RegisterRequest) (protocol.RegisterResponse, error)
+	Authenticate(req protocol.AuthenticateRequest) (protocol.AuthenticateResponse, error)
 }
 
 type Server struct {
@@ -26,6 +27,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("/health", s.handleHealth)
 	mux.HandleFunc("/api/init", s.handleInit)
 	mux.HandleFunc("/api/register", s.handleRegister)
+	mux.HandleFunc("/api/authenticate", s.handleAuthentication)
 
 	return mux
 }

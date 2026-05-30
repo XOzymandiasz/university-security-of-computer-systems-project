@@ -11,6 +11,7 @@ import {MessageResponseModel} from '../../model/messageResponse.model';
 export class MessageComponent {
   private readonly messageService = inject(MessageService);
 
+  readonly authenticated = signal(false);
   readonly messageText = signal('');
   readonly response = signal<MessageResponseModel | null>(null);
   readonly loading = signal(false);
@@ -18,6 +19,15 @@ export class MessageComponent {
 
   sendMessage(event: SubmitEvent): void {
     event.preventDefault();
+
+    if (!this.authenticated()) {
+      this.response.set({
+        body: 'Authenticate first.',
+      });
+
+      this.error.set('');
+      return;
+    }
 
     const text = this.messageText().trim();
 
@@ -36,6 +46,22 @@ export class MessageComponent {
       },
       error: () => {
         this.error.set('Failed to send message.');
+        this.loading.set(false);
+      },
+    });
+  }
+
+  authenticate(): void {
+    this.loading.set(true);
+    this.error.set('');
+
+    this.messageService.authenticate().subscribe({
+      next: () => {
+        this.authenticated.set(true);
+        this.loading.set(false);
+      },
+      error: () => {
+        this.error.set('Authentication failed.');
         this.loading.set(false);
       },
     });

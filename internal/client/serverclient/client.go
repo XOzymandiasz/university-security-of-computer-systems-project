@@ -98,6 +98,54 @@ func (c *Client) Register(req protocol.RegisterRequest) (string, error) {
 	return response.Certificate, nil
 }
 
+func (c *Client) Authenticate(
+	req protocol.ClientAuthenticateRequest,
+) (protocol.ClientAuthenticateResponse, error) {
+	body, err := json.Marshal(req)
+	if err != nil {
+		return protocol.ClientAuthenticateResponse{}, fmt.Errorf("marshal client authenticate request: %w", err)
+	}
+
+	httpReq, err := http.NewRequest(
+		http.MethodPost,
+		"http://"+c.addr+"/api/authenticate",
+		bytes.NewReader(body),
+	)
+	if err != nil {
+		return protocol.ClientAuthenticateResponse{}, fmt.Errorf("create client authenticate request: %w", err)
+	}
+
+	httpReq.Header.Set("Content-Type", "application/json")
+
+	resp, err := http.DefaultClient.Do(httpReq)
+	if err != nil {
+		return protocol.ClientAuthenticateResponse{}, fmt.Errorf("client authenticate request: %w", err)
+	}
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+
+	if resp.StatusCode != http.StatusOK {
+		respBody, _ := io.ReadAll(resp.Body)
+		return protocol.ClientAuthenticateResponse{}, fmt.Errorf(
+			"client authenticate failed: status=%d body=%s",
+			resp.StatusCode,
+			string(respBody),
+		)
+	}
+
+	var response protocol.ClientAuthenticateResponse
+	if err = json.NewDecoder(resp.Body).Decode(&response); err != nil {
+		return protocol.ClientAuthenticateResponse{}, fmt.Errorf("decode client authenticate response: %w", err)
+	}
+
+	if !response.OK {
+		return protocol.ClientAuthenticateResponse{}, fmt.Errorf("authentication rejected: %s", response.Message)
+	}
+
+	return response, nil
+}
+
 func (c *Client) ReadMessage(msg string) (string, error) {
 	req := protocol.MessageRequest{
 		Body: msg,
