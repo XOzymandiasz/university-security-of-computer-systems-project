@@ -3,7 +3,7 @@ package third_part
 import (
 	"log"
 	"net/http"
-	"scs/internal/identity"
+	"scs/internal/shared/identity"
 	"scs/internal/third-part/httpapi"
 	"scs/internal/third-part/ttpservice"
 )

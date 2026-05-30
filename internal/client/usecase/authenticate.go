@@ -5,9 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"path/filepath"
-
-	"scs/internal/identity"
-	"scs/internal/protocol"
+	identity2 "scs/internal/shared/identity"
+	"scs/internal/shared/protocol"
 )
 
 type ServerAuthenticator interface {
@@ -42,26 +41,26 @@ func (a *Authenticate) Authenticate() error {
 		return fmt.Errorf("ttp init: %w", err)
 	}
 
-	clientData, err := identity.LoadRegistrationData(a.baseDir)
+	clientData, err := identity2.LoadRegistrationData(a.baseDir)
 
 	if err != nil {
 		return fmt.Errorf("load registration data: %w", err)
 	}
 
 	var clientCertificate string
-	clientCertificate, err = identity.LoadCertificate(a.baseDir)
+	clientCertificate, err = identity2.LoadCertificate(a.baseDir)
 	if err != nil {
 		return fmt.Errorf("load client certificate: %w", err)
 	}
 
 	var clientAuthPrivateKey *rsa.PrivateKey
-	clientAuthPrivateKey, err = identity.LoadPrivateKey(filepath.Join(a.baseDir, "auth.key"))
+	clientAuthPrivateKey, err = identity2.LoadPrivateKey(filepath.Join(a.baseDir, "auth.key"))
 	if err != nil {
 		return fmt.Errorf("load client auth private key: %w", err)
 	}
 
 	var clientSignature string
-	clientSignature, err = identity.SignBase64([]byte(clientData.EncryptedID), clientAuthPrivateKey)
+	clientSignature, err = identity2.SignBase64([]byte(clientData.EncryptedID), clientAuthPrivateKey)
 	if err != nil {
 		return fmt.Errorf("sign client id: %w", err)
 	}
@@ -79,7 +78,7 @@ func (a *Authenticate) Authenticate() error {
 	}
 
 	var encryptedPayload string
-	encryptedPayload, err = identity.EncryptLargePayloadWithPublicKeyBase64(payloadBytes, ttpPublicKey)
+	encryptedPayload, err = identity2.EncryptLargePayloadWithPublicKeyBase64(payloadBytes, ttpPublicKey)
 	if err != nil {
 		return fmt.Errorf("encrypt client auth payload: %w", err)
 	}
@@ -93,13 +92,13 @@ func (a *Authenticate) Authenticate() error {
 	}
 
 	var clientEncPrivateKey *rsa.PrivateKey
-	clientEncPrivateKey, err = identity.LoadPrivateKey(filepath.Join(a.baseDir, "enc.key"))
+	clientEncPrivateKey, err = identity2.LoadPrivateKey(filepath.Join(a.baseDir, "enc.key"))
 	if err != nil {
 		return fmt.Errorf("load client enc private key: %w", err)
 	}
 
 	var sessionKey []byte
-	sessionKey, err = identity.DecryptWithPrivateKeyBase64(
+	sessionKey, err = identity2.DecryptWithPrivateKeyBase64(
 		serverResp.EncryptedSessionKeyForClient,
 		clientEncPrivateKey,
 	)
@@ -107,7 +106,7 @@ func (a *Authenticate) Authenticate() error {
 		return fmt.Errorf("decrypt client session key: %w", err)
 	}
 
-	if err = identity.SaveSessionKey(a.baseDir, sessionKey); err != nil {
+	if err = identity2.SaveSessionKey(a.baseDir, sessionKey); err != nil {
 		return fmt.Errorf("save client session key: %w", err)
 	}
 

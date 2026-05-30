@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"scs/internal/identity"
-	"scs/internal/protocol"
+	identity2 "scs/internal/shared/identity"
+	protocol2 "scs/internal/shared/protocol"
 )
 
 type Client struct {
@@ -40,7 +40,7 @@ func (c *Client) Init() (*rsa.PublicKey, error) {
 		return nil, fmt.Errorf("ttp init failed: status=%d body=%s", resp.StatusCode, string(body))
 	}
 
-	var response protocol.InitResponse
+	var response protocol2.InitResponse
 	if err = json.NewDecoder(resp.Body).Decode(&response); err != nil {
 		return nil, fmt.Errorf("decode init response: %w", err)
 	}
@@ -48,7 +48,7 @@ func (c *Client) Init() (*rsa.PublicKey, error) {
 	keyBase64 := response.TTPEncPublicKey
 
 	var key *rsa.PublicKey
-	key, err = identity.ParsePublicKeyFromBase64(keyBase64)
+	key, err = identity2.ParsePublicKeyFromBase64(keyBase64)
 	if err != nil {
 		return nil, fmt.Errorf("parse public key: %w", err)
 	}
@@ -56,7 +56,7 @@ func (c *Client) Init() (*rsa.PublicKey, error) {
 	return key, nil
 }
 
-func (c *Client) Register(req protocol.RegisterRequest) (string, error) {
+func (c *Client) Register(req protocol2.RegisterRequest) (string, error) {
 	body, err := json.Marshal(req)
 	if err != nil {
 		return "", fmt.Errorf("marshal register request: %w", err)
@@ -88,7 +88,7 @@ func (c *Client) Register(req protocol.RegisterRequest) (string, error) {
 		return "", fmt.Errorf("ttp register failed: status=%d body=%s", resp.StatusCode, string(body))
 	}
 
-	var response protocol.RegisterResponse
+	var response protocol2.RegisterResponse
 	if err = json.NewDecoder(resp.Body).Decode(&response); err != nil {
 		return "", fmt.Errorf("decode register response: %w", err)
 	}
@@ -100,10 +100,10 @@ func (c *Client) Register(req protocol.RegisterRequest) (string, error) {
 	return response.Certificate, nil
 }
 
-func (c *Client) Authenticate(req protocol.ClientAuthenticateRequest) (protocol.ClientAuthenticateResponse, error) {
+func (c *Client) Authenticate(req protocol2.ClientAuthenticateRequest) (protocol2.ClientAuthenticateResponse, error) {
 	body, err := json.Marshal(req)
 	if err != nil {
-		return protocol.ClientAuthenticateResponse{}, fmt.Errorf("marshal client authenticate request: %w", err)
+		return protocol2.ClientAuthenticateResponse{}, fmt.Errorf("marshal client authenticate request: %w", err)
 	}
 
 	var httpReq *http.Request
@@ -113,7 +113,7 @@ func (c *Client) Authenticate(req protocol.ClientAuthenticateRequest) (protocol.
 		bytes.NewReader(body),
 	)
 	if err != nil {
-		return protocol.ClientAuthenticateResponse{}, fmt.Errorf("create client authenticate request: %w", err)
+		return protocol2.ClientAuthenticateResponse{}, fmt.Errorf("create client authenticate request: %w", err)
 	}
 
 	httpReq.Header.Set("Content-Type", "application/json")
@@ -121,7 +121,7 @@ func (c *Client) Authenticate(req protocol.ClientAuthenticateRequest) (protocol.
 	var resp *http.Response
 	resp, err = http.DefaultClient.Do(httpReq)
 	if err != nil {
-		return protocol.ClientAuthenticateResponse{}, fmt.Errorf("client authenticate request: %w", err)
+		return protocol2.ClientAuthenticateResponse{}, fmt.Errorf("client authenticate request: %w", err)
 	}
 	defer func() {
 		_ = resp.Body.Close()
@@ -129,38 +129,38 @@ func (c *Client) Authenticate(req protocol.ClientAuthenticateRequest) (protocol.
 
 	if resp.StatusCode != http.StatusOK {
 		respBody, _ := io.ReadAll(resp.Body)
-		return protocol.ClientAuthenticateResponse{}, fmt.Errorf(
+		return protocol2.ClientAuthenticateResponse{}, fmt.Errorf(
 			"client authenticate failed: status=%d body=%s",
 			resp.StatusCode,
 			string(respBody),
 		)
 	}
 
-	var response protocol.ClientAuthenticateResponse
+	var response protocol2.ClientAuthenticateResponse
 	if err = json.NewDecoder(resp.Body).Decode(&response); err != nil {
-		return protocol.ClientAuthenticateResponse{}, fmt.Errorf("decode client authenticate response: %w", err)
+		return protocol2.ClientAuthenticateResponse{}, fmt.Errorf("decode client authenticate response: %w", err)
 	}
 
 	if !response.OK {
-		return protocol.ClientAuthenticateResponse{}, fmt.Errorf("authentication rejected: %s", response.Message)
+		return protocol2.ClientAuthenticateResponse{}, fmt.Errorf("authentication rejected: %s", response.Message)
 	}
 
 	return response, nil
 }
 
 func (c *Client) ReadMessage(msg string) (string, error) {
-	sessionKey, err := identity.LoadSessionKey(c.baseDir)
+	sessionKey, err := identity2.LoadSessionKey(c.baseDir)
 	if err != nil {
 		return "", fmt.Errorf("client is not authenticated - missing session key: %w", err)
 	}
 
 	var encryptedBody string
-	encryptedBody, err = identity.EncryptWithSessionKeyBase64([]byte(msg), sessionKey)
+	encryptedBody, err = identity2.EncryptWithSessionKeyBase64([]byte(msg), sessionKey)
 	if err != nil {
 		return "", fmt.Errorf("encrypt message: %w", err)
 	}
 
-	req := protocol.MessageRequest{
+	req := protocol2.MessageRequest{
 		EncryptedBody: encryptedBody,
 	}
 
@@ -196,18 +196,18 @@ func (c *Client) ReadMessage(msg string) (string, error) {
 		return "", fmt.Errorf("server read message failed: status=%d body=%s", resp.StatusCode, string(body))
 	}
 
-	var response protocol.MessageResponse
+	var response protocol2.MessageResponse
 	if err = json.NewDecoder(resp.Body).Decode(&response); err != nil {
 		return "", fmt.Errorf("decode message response: %w", err)
 	}
 
 	var plaintext []byte
-	plaintext, err = identity.DecryptWithSessionKeyBase64(response.EncryptedBody, sessionKey)
+	plaintext, err = identity2.DecryptWithSessionKeyBase64(response.EncryptedBody, sessionKey)
 	if err != nil {
 		return "", fmt.Errorf("decrypt message response: %w", err)
 	}
 
-	_ = identity.DeleteSessionKey(c.baseDir)
+	_ = identity2.DeleteSessionKey(c.baseDir)
 
 	return string(plaintext), nil
 }

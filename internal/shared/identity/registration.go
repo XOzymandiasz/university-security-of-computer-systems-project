@@ -3,7 +3,7 @@ package identity
 import (
 	"os"
 	"path/filepath"
-	"scs/internal/protocol"
+	"scs/internal/shared/protocol"
 )
 
 func LoadRegistrationData(baseDir string) (protocol.RegisterRequest, error) {

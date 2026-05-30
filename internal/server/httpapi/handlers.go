@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"net/http"
 	"path/filepath"
-	"scs/internal/identity"
-	"scs/internal/protocol"
+	identity2 "scs/internal/shared/identity"
+	protocol2 "scs/internal/shared/protocol"
 	"strings"
 )
 
@@ -21,13 +21,13 @@ func (s *Server) handleMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sessionKey, err := identity.LoadSessionKey(s.baseDir)
+	sessionKey, err := identity2.LoadSessionKey(s.baseDir)
 	if err != nil {
 		http.Error(w, "server is not authenticated - missing session key", http.StatusUnauthorized)
 		return
 	}
 
-	var request protocol.MessageRequest
+	var request protocol2.MessageRequest
 	if err = json.NewDecoder(r.Body).Decode(&request); err != nil {
 		http.Error(w, "invalid request body", http.StatusBadRequest)
 		return
@@ -42,7 +42,7 @@ func (s *Server) handleMessage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var plaintext []byte
-	plaintext, err = identity.DecryptWithSessionKeyBase64(request.EncryptedBody, sessionKey)
+	plaintext, err = identity2.DecryptWithSessionKeyBase64(request.EncryptedBody, sessionKey)
 	if err != nil {
 		http.Error(w, "decrypt request: "+err.Error(), http.StatusUnauthorized)
 		return
@@ -51,17 +51,17 @@ func (s *Server) handleMessage(w http.ResponseWriter, r *http.Request) {
 	responseText := strings.ToUpper(string(plaintext))
 
 	var encryptedResponse string
-	encryptedResponse, err = identity.EncryptWithSessionKeyBase64([]byte(responseText), sessionKey)
+	encryptedResponse, err = identity2.EncryptWithSessionKeyBase64([]byte(responseText), sessionKey)
 	if err != nil {
 		http.Error(w, "encrypt response: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	response := protocol.MessageResponse{
+	response := protocol2.MessageResponse{
 		EncryptedBody: encryptedResponse,
 	}
 
-	_ = identity.DeleteSessionKey(s.baseDir)
+	_ = identity2.DeleteSessionKey(s.baseDir)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
@@ -78,46 +78,46 @@ func (s *Server) handleAuthenticate(writer http.ResponseWriter, request *http.Re
 		return
 	}
 
-	var clientReq protocol.ClientAuthenticateRequest
+	var clientReq protocol2.ClientAuthenticateRequest
 	if err := json.NewDecoder(request.Body).Decode(&clientReq); err != nil {
 		http.Error(writer, "invalid request body", http.StatusBadRequest)
 		return
 	}
 
-	serverData, err := identity.LoadRegistrationData(s.baseDir)
+	serverData, err := identity2.LoadRegistrationData(s.baseDir)
 	if err != nil {
 		http.Error(writer, "server is not authenticated - missing session key: "+err.Error(), http.StatusUnauthorized)
 	}
 
 	var serverCertificate string
-	serverCertificate, err = identity.LoadCertificate(s.baseDir)
+	serverCertificate, err = identity2.LoadCertificate(s.baseDir)
 	if err != nil {
 		http.Error(writer, "load server certificate: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	var serverAuthPrivateKey *rsa.PrivateKey
-	serverAuthPrivateKey, err = identity.LoadPrivateKey(filepath.Join(s.baseDir, "auth.key"))
+	serverAuthPrivateKey, err = identity2.LoadPrivateKey(filepath.Join(s.baseDir, "auth.key"))
 	if err != nil {
 		http.Error(writer, "load server auth private key: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	var serverSignature string
-	serverSignature, err = identity.SignBase64([]byte(serverData.EncryptedID), serverAuthPrivateKey)
+	serverSignature, err = identity2.SignBase64([]byte(serverData.EncryptedID), serverAuthPrivateKey)
 	if err != nil {
 		http.Error(writer, "sign server id: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	ttpReq := protocol.AuthenticateRequest{
+	ttpReq := protocol2.AuthenticateRequest{
 		ServerID:               serverData.EncryptedID,
 		ServerCertificate:      serverCertificate,
 		ServerSignature:        serverSignature,
 		ClientEncryptedPayload: clientReq.ClientEncryptedPayload,
 	}
 
-	var ttpResp protocol.AuthenticateResponse
+	var ttpResp protocol2.AuthenticateResponse
 	ttpResp, err = s.ttpClient.Authenticate(ttpReq)
 	if err != nil {
 		http.Error(writer, "ttp authenticate: "+err.Error(), http.StatusUnauthorized)
@@ -125,14 +125,14 @@ func (s *Server) handleAuthenticate(writer http.ResponseWriter, request *http.Re
 	}
 
 	var serverEncPrivateKey *rsa.PrivateKey
-	serverEncPrivateKey, err = identity.LoadPrivateKey(filepath.Join(s.baseDir, "enc.key"))
+	serverEncPrivateKey, err = identity2.LoadPrivateKey(filepath.Join(s.baseDir, "enc.key"))
 	if err != nil {
 		http.Error(writer, "load server enc private key: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	var sessionKey []byte
-	sessionKey, err = identity.DecryptWithPrivateKeyBase64(
+	sessionKey, err = identity2.DecryptWithPrivateKeyBase64(
 		ttpResp.EncryptedSessionKeyForServer,
 		serverEncPrivateKey,
 	)
@@ -141,12 +141,12 @@ func (s *Server) handleAuthenticate(writer http.ResponseWriter, request *http.Re
 		return
 	}
 
-	if err = identity.SaveSessionKey(s.baseDir, sessionKey); err != nil {
+	if err = identity2.SaveSessionKey(s.baseDir, sessionKey); err != nil {
 		http.Error(writer, "save server session key: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	resp := protocol.ClientAuthenticateResponse{
+	resp := protocol2.ClientAuthenticateResponse{
 		OK:                           true,
 		EncryptedSessionKeyForClient: ttpResp.EncryptedSessionKeyForClient,
 		Message:                      "authenticated",

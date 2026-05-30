@@ -8,7 +8,7 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
-	"scs/internal/identity"
+	"scs/internal/shared/identity"
 )
 
 func DecryptLargePayloadWithPrivateKeyBase64(encoded string, privateKey *rsa.PrivateKey) ([]byte, error) {

@@ -3,8 +3,8 @@ package httpapi
 import (
 	"encoding/json"
 	"net/http"
-	"scs/internal/identity"
-	"scs/internal/protocol"
+	"scs/internal/shared/identity"
+	"scs/internal/shared/protocol"
 )
 
 func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {

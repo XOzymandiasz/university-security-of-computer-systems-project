@@ -2,13 +2,13 @@ package httpapi
 
 import (
 	"net/http"
-	"scs/internal/protocol"
+	protocol2 "scs/internal/shared/protocol"
 )
 
 type TTPService interface {
-	Init() (protocol.InitResponse, error)
-	Register(req protocol.RegisterRequest) (protocol.RegisterResponse, error)
-	Authenticate(req protocol.AuthenticateRequest) (protocol.AuthenticateResponse, error)
+	Init() (protocol2.InitResponse, error)
+	Register(req protocol2.RegisterRequest) (protocol2.RegisterResponse, error)
+	Authenticate(req protocol2.AuthenticateRequest) (protocol2.AuthenticateResponse, error)
 }
 
 type Server struct {

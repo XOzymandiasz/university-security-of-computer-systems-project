@@ -10,7 +10,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"math/big"
-	"scs/internal/identity"
+	"scs/internal/shared/identity"
 	"time"
 )
 

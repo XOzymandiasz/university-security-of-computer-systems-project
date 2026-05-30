@@ -2,8 +2,7 @@ package httpapi
 
 import (
 	"net/http"
-
-	"scs/internal/protocol"
+	"scs/internal/shared/protocol"
 )
 
 type TTPClient interface {

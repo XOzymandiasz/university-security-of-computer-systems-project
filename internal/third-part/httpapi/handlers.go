@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
-	"scs/internal/protocol"
+	protocol2 "scs/internal/shared/protocol"
 )
 
 func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
@@ -38,7 +38,7 @@ func (s *Server) handleRegister(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req protocol.RegisterRequest
+	var req protocol2.RegisterRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -63,7 +63,7 @@ func (s *Server) handleAuthentication(writer http.ResponseWriter, request *http.
 		return
 	}
 
-	var req protocol.AuthenticateRequest
+	var req protocol2.AuthenticateRequest
 	if err := json.NewDecoder(request.Body).Decode(&req); err != nil {
 		http.Error(writer, "invalid request body", http.StatusBadRequest)
 		return

@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"scs/internal/identity"
-	"scs/internal/protocol"
+	"scs/internal/shared/identity"
+	protocol2 "scs/internal/shared/protocol"
 )
 
 type RegisterRequest struct {
@@ -41,7 +41,7 @@ func (c *Client) Init() (*rsa.PublicKey, error) {
 		return nil, fmt.Errorf("ttp init failed: status=%d body=%s", resp.StatusCode, string(body))
 	}
 
-	var response protocol.InitResponse
+	var response protocol2.InitResponse
 	if err = json.NewDecoder(resp.Body).Decode(&response); err != nil {
 		return nil, fmt.Errorf("decode init response: %w", err)
 	}
@@ -57,7 +57,7 @@ func (c *Client) Init() (*rsa.PublicKey, error) {
 	return key, nil
 }
 
-func (c *Client) Register(req protocol.RegisterRequest) (string, error) {
+func (c *Client) Register(req protocol2.RegisterRequest) (string, error) {
 	body, err := json.Marshal(req)
 	if err != nil {
 		return "", fmt.Errorf("marshal register request: %w", err)
@@ -89,7 +89,7 @@ func (c *Client) Register(req protocol.RegisterRequest) (string, error) {
 		return "", fmt.Errorf("ttp register failed: status=%d body=%s", resp.StatusCode, string(respBody))
 	}
 
-	var response protocol.RegisterResponse
+	var response protocol2.RegisterResponse
 	if err = json.NewDecoder(resp.Body).Decode(&response); err != nil {
 		return "", fmt.Errorf("decode register response: %w", err)
 	}
@@ -101,10 +101,10 @@ func (c *Client) Register(req protocol.RegisterRequest) (string, error) {
 	return response.Certificate, nil
 }
 
-func (c *Client) Authenticate(req protocol.AuthenticateRequest) (protocol.AuthenticateResponse, error) {
+func (c *Client) Authenticate(req protocol2.AuthenticateRequest) (protocol2.AuthenticateResponse, error) {
 	body, err := json.Marshal(req)
 	if err != nil {
-		return protocol.AuthenticateResponse{}, fmt.Errorf("marshal ttp authenticate request: %w", err)
+		return protocol2.AuthenticateResponse{}, fmt.Errorf("marshal ttp authenticate request: %w", err)
 	}
 
 	var httpReq *http.Request
@@ -114,7 +114,7 @@ func (c *Client) Authenticate(req protocol.AuthenticateRequest) (protocol.Authen
 		bytes.NewReader(body),
 	)
 	if err != nil {
-		return protocol.AuthenticateResponse{}, fmt.Errorf("create ttp authenticate request: %w", err)
+		return protocol2.AuthenticateResponse{}, fmt.Errorf("create ttp authenticate request: %w", err)
 	}
 
 	httpReq.Header.Set("Content-Type", "application/json")
@@ -122,7 +122,7 @@ func (c *Client) Authenticate(req protocol.AuthenticateRequest) (protocol.Authen
 	var resp *http.Response
 	resp, err = http.DefaultClient.Do(httpReq)
 	if err != nil {
-		return protocol.AuthenticateResponse{}, fmt.Errorf("ttp authenticate request: %w", err)
+		return protocol2.AuthenticateResponse{}, fmt.Errorf("ttp authenticate request: %w", err)
 	}
 	defer func() {
 		_ = resp.Body.Close()
@@ -130,28 +130,28 @@ func (c *Client) Authenticate(req protocol.AuthenticateRequest) (protocol.Authen
 
 	if resp.StatusCode != http.StatusOK {
 		respBody, _ := io.ReadAll(resp.Body)
-		return protocol.AuthenticateResponse{}, fmt.Errorf(
+		return protocol2.AuthenticateResponse{}, fmt.Errorf(
 			"ttp authenticate failed: status=%d body=%s",
 			resp.StatusCode,
 			string(respBody),
 		)
 	}
 
-	var response protocol.AuthenticateResponse
+	var response protocol2.AuthenticateResponse
 	if err = json.NewDecoder(resp.Body).Decode(&response); err != nil {
-		return protocol.AuthenticateResponse{}, fmt.Errorf("decode ttp authenticate response: %w", err)
+		return protocol2.AuthenticateResponse{}, fmt.Errorf("decode ttp authenticate response: %w", err)
 	}
 
 	if !response.OK {
-		return protocol.AuthenticateResponse{}, fmt.Errorf("authentication rejected: %s", response.Message)
+		return protocol2.AuthenticateResponse{}, fmt.Errorf("authentication rejected: %s", response.Message)
 	}
 
 	if response.EncryptedSessionKeyForClient == "" {
-		return protocol.AuthenticateResponse{}, fmt.Errorf("empty encrypted session key for client")
+		return protocol2.AuthenticateResponse{}, fmt.Errorf("empty encrypted session key for client")
 	}
 
 	if response.EncryptedSessionKeyForServer == "" {
-		return protocol.AuthenticateResponse{}, fmt.Errorf("empty encrypted session key for server")
+		return protocol2.AuthenticateResponse{}, fmt.Errorf("empty encrypted session key for server")
 	}
 
 	return response, nil
