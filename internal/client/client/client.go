@@ -46,6 +46,7 @@ func New(addr string, baseDir string) *Client {
 //
 // @return Publiczny klucz RSA usługi TTP lub błąd żądania.
 func (c *Client) Init() (*rsa.PublicKey, error) {
+	fmt.Println("Init ttp")
 	resp, err := http.Get(c.url("/api/init"))
 	if err != nil {
 		return nil, fmt.Errorf("ttp init request: %w", err)
@@ -87,6 +88,7 @@ func (c *Client) Init() (*rsa.PublicKey, error) {
 // @param req Dane rejestracyjne aplikacji.
 // @return Certyfikat X.509 w formacie Base64 lub błąd rejestracji.
 func (c *Client) Register(req protocol.RegisterRequest) (string, error) {
+	fmt.Println("Register ttp")
 	body, err := json.Marshal(req)
 	if err != nil {
 		return "", fmt.Errorf("marshal register request: %w", err)
@@ -139,6 +141,7 @@ func (c *Client) Register(req protocol.RegisterRequest) (string, error) {
 // @param req Żądanie uwierzytelnienia klienta zawierające zaszyfrowany pakiet.
 // @return Odpowiedź uwierzytelniania lub błąd w przypadku odrzucenia.
 func (c *Client) Authenticate(req protocol.ClientAuthenticateRequest) (protocol.ClientAuthenticateResponse, error) {
+	fmt.Println("Authenticate")
 	body, err := json.Marshal(req)
 	if err != nil {
 		return protocol.ClientAuthenticateResponse{}, fmt.Errorf("marshal client authenticate request: %w", err)
@@ -195,6 +198,7 @@ func (c *Client) Authenticate(req protocol.ClientAuthenticateRequest) (protocol.
 // @param msg Jawna treść wiadomości wpisana przez użytkownika.
 // @return Odszyfrowana odpowiedź serwera lub błąd komunikacji.
 func (c *Client) ReadMessage(msg string) (string, error) {
+	fmt.Println("Message")
 	sessionKey, err := identity.LoadSessionKey(c.baseDir)
 	if err != nil {
 		return "", fmt.Errorf("client is not authenticated - missing session key: %w", err)

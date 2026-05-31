@@ -29,7 +29,10 @@ func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
 // @param w Obiekt odpowiedzi HTTP.
 // @param r Obiekt żądania HTTP.
 func (s *Server) handleInit(w http.ResponseWriter, r *http.Request) {
-	log.Println("handleInit called", r.Method, r.URL.Path)
+	log.Printf("handleInit called by remoteAddr=%s userAgent=%q",
+		r.RemoteAddr,
+		r.UserAgent(),
+	)
 
 	if r.Method != http.MethodGet {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
@@ -56,6 +59,10 @@ func (s *Server) handleInit(w http.ResponseWriter, r *http.Request) {
 // @param w Obiekt odpowiedzi HTTP.
 // @param r Obiekt żądania HTTP.
 func (s *Server) handleRegister(w http.ResponseWriter, r *http.Request) {
+	log.Printf("handleRegister called by remoteAddr=%s userAgent=%q",
+		r.RemoteAddr,
+		r.UserAgent(),
+	)
 	if r.Method != http.MethodPost {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		return
@@ -90,6 +97,10 @@ func (s *Server) handleRegister(w http.ResponseWriter, r *http.Request) {
 // @param writer Obiekt odpowiedzi HTTP.
 // @param request Obiekt żądania HTTP.
 func (s *Server) handleAuthentication(writer http.ResponseWriter, request *http.Request) {
+	log.Printf("handleAuthentication called by remoteAddr=%s userAgent=%q",
+		request.RemoteAddr,
+		request.UserAgent(),
+	)
 	if request.Method != http.MethodPost {
 		http.Error(writer, "method not allowed", http.StatusMethodNotAllowed)
 		return

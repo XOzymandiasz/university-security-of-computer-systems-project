@@ -52,6 +52,7 @@ func New(addr string) *Client {
 //
 // @return Publiczny klucz RSA usługi TTP lub błąd inicjalizacji.
 func (c *Client) Init() (*rsa.PublicKey, error) {
+	fmt.Println("Init ttp")
 	resp, err := http.Get(c.url("/api/init"))
 	if err != nil {
 		return nil, fmt.Errorf("ttp init request: %w", err)
@@ -93,6 +94,7 @@ func (c *Client) Init() (*rsa.PublicKey, error) {
 // @param req Dane rejestracyjne aplikacji.
 // @return Certyfikat X.509 w formacie Base64 lub błąd rejestracji.
 func (c *Client) Register(req protocol.RegisterRequest) (string, error) {
+	fmt.Println("Register ttp")
 	body, err := json.Marshal(req)
 	if err != nil {
 		return "", fmt.Errorf("marshal register request: %w", err)
@@ -145,6 +147,7 @@ func (c *Client) Register(req protocol.RegisterRequest) (string, error) {
 // @param req Żądanie uwierzytelnienia zawierające dane klienta i serwera.
 // @return Odpowiedź TTP z zaszyfrowanymi kluczami sesyjnymi lub błąd.
 func (c *Client) Authenticate(req protocol.AuthenticateRequest) (protocol.AuthenticateResponse, error) {
+	fmt.Println("Authenticate")
 	body, err := json.Marshal(req)
 	if err != nil {
 		return protocol.AuthenticateResponse{}, fmt.Errorf("marshal ttp authenticate request: %w", err)
