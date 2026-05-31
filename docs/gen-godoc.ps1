@@ -20,7 +20,7 @@ $env:LC_ALL = "pl_PL.UTF-8"
 [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)
 $OutputEncoding = [System.Text.UTF8Encoding]::new($false)
 
-$OutputDir = "docs/godoc"
+$OutputDir = "godoc"
 
 if (!(Test-Path $OutputDir)) {
     New-Item -ItemType Directory -Force $OutputDir | Out-Null

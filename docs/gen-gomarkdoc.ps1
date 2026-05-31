@@ -2,7 +2,7 @@
 
 $ErrorActionPreference = "Stop"
 
-$DocsDir = "docs/gomarkdoc"
+$DocsDir = "gomarkdoc"
 $OutputFile = "$DocsDir/API.md"
 
 Write-Host "Creating docs directory..."
