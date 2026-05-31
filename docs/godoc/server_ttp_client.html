@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Server TTP Client - GoDoc</title>
+    <style>
+        body {
+            font-family: Segoe UI, Arial, sans-serif;
+            margin: 0;
+            background: #f6f8fa;
+            color: #24292f;
+        }
+        header {
+            background: #0d1117;
+            color: white;
+            padding: 20px 32px;
+        }
+        main {
+            max-width: 1100px;
+            margin: 32px auto;
+            background: white;
+            padding: 32px;
+            border-radius: 12px;
+            box-shadow: 0 4px 18px rgba(0,0,0,0.08);
+        }
+        a {
+            color: #0969da;
+            text-decoration: none;
+        }
+        pre {
+            white-space: pre-wrap;
+            font-family: Consolas, monospace;
+            font-size: 14px;
+            line-height: 1.45;
+        }
+        .back {
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+<header>
+    <h1>Server TTP Client</h1>
+    <p>./internal/server/client</p>
+</header>
+<main>
+    <a class="back" href="index.html">â† PowrĂłt do indeksu</a>
+    <pre>package client // import "scs/internal/server/client"
+
+Package client zawiera klienta HTTP używanego przez serwer do komunikacji z TTP.
+
+Pakiet odpowiada za inicjalizację połączenia z TTP, rejestrację aplikacji oraz
+przekazywanie żądań uwierzytelnienia klient-serwer do zaufanej strony trzeciej.
+
+TYPES
+
+type Client struct {
+	// Has unexported fields.
+}
+    Client reprezentuje klienta HTTP komunikującego się z usługą TTP.
+
+    Struktura przechowuje adres TTP i udostępnia metody pozwalające pobrać
+    publiczny klucz TTP, zarejestrować aplikację oraz wykonać uwierzytelnianie.
+
+func New(addr string) *Client
+    New tworzy nowego klienta HTTP do komunikacji z TTP.
+
+    @param addr Adres usługi TTP w formacie host:port. @return Wskaźnik do nowej
+    instancji Client.
+
+func (c *Client) Authenticate(req protocol.AuthenticateRequest) (protocol.AuthenticateResponse, error)
+    Authenticate przekazuje do TTP żądanie uwierzytelnienia klienta i serwera.
+
+    Funkcja wysyła komplet danych uwierzytelniających do TTP. Po pozytywnej
+    weryfikacji TTP zwraca klucz sesyjny AES zaszyfrowany osobno dla klienta i
+    serwera.
+
+    @param req Żądanie uwierzytelnienia zawierające dane klienta i serwera.
+    @return Odpowiedź TTP z zaszyfrowanymi kluczami sesyjnymi lub błąd.
+
+func (c *Client) Init() (*rsa.PublicKey, error)
+    Init pobiera publiczny klucz szyfrujący TTP.
+
+    Funkcja wysyła żądanie inicjalizacyjne do endpointu TTP, odbiera klucz
+    publiczny w formacie Base64 i parsuje go do struktury RSA.
+
+    @return Publiczny klucz RSA usługi TTP lub błąd inicjalizacji.
+
+func (c *Client) Register(req protocol.RegisterRequest) (string, error)
+    Register rejestruje aplikację w TTP.
+
+    Funkcja wysyła do TTP dane rejestracyjne aplikacji, takie jak zaszyfrowany
+    identyfikator, publiczne klucze RSA oraz rola aplikacji. W odpowiedzi
+    otrzymuje certyfikat X.509 wygenerowany przez TTP.
+
+    @param req Dane rejestracyjne aplikacji. @return Certyfikat X.509 w formacie
+    Base64 lub błąd rejestracji.
+
+type RegisterRequest struct {
+	ID        string `json:"id"`
+	PublicKey string `json:"public_key"`
+}
+    RegisterRequest reprezentuje uproszczone żądanie rejestracji.
+
+    Struktura zawiera identyfikator oraz publiczny klucz aplikacji.
+    W aktualnym protokole główne żądanie rejestracji jest definiowane przez
+    protocol.RegisterRequest, dlatego ten typ może pełnić rolę pomocniczą.
+
+    @field ID Identyfikator rejestrowanej aplikacji. @field PublicKey Publiczny
+    klucz aplikacji.
+</pre>
+</main>
+</body>
+</html>

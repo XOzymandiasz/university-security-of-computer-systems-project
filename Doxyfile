@@ -1,0 +1,63 @@
+PROJECT_NAME           = "Protokół TTP"
+PROJECT_NUMBER         = "1.0"
+PROJECT_BRIEF          = "System Client-Server-TTP z uwierzytelnianiem, certyfikatami X.509 oraz szyfrowaną komunikacją"
+
+OUTPUT_DIRECTORY       = "./docs/doxyfile"
+OUTPUT_LANGUAGE        = Polish
+
+INPUT                  = "./cmd" \
+                         "./internal" \
+                         "./pkg" \
+                         "./ui/src" \
+                         "./README.md"
+
+RECURSIVE              = YES
+
+# Go + TypeScript + Markdown
+FILE_PATTERNS          = *.go \
+                         *.ts \
+                         *.tsx \
+                         *.md
+
+EXTENSION_MAPPING      = go=C \
+                         ts=JavaScript \
+                         tsx=JavaScript
+
+EXTRACT_ALL            = YES
+EXTRACT_PRIVATE        = YES
+EXTRACT_STATIC         = YES
+EXTRACT_LOCAL_METHODS  = YES
+EXTRACT_ANON_NSPACES   = YES
+
+JAVADOC_AUTOBRIEF      = YES
+MULTILINE_CPP_IS_BRIEF = YES
+OPTIMIZE_OUTPUT_FOR_C  = YES
+
+SOURCE_BROWSER         = YES
+INLINE_SOURCES         = YES
+REFERENCED_BY_RELATION = YES
+REFERENCES_RELATION    = YES
+
+GENERATE_HTML          = YES
+HTML_OUTPUT            = html
+GENERATE_LATEX         = NO
+GENERATE_TREEVIEW      = YES
+
+USE_MDFILE_AS_MAINPAGE = README.md
+
+HAVE_DOT               = YES
+CALL_GRAPH             = YES
+CALLER_GRAPH           = YES
+CLASS_DIAGRAMS         = YES
+DOT_IMAGE_FORMAT       = svg
+INTERACTIVE_SVG        = YES
+
+INPUT_ENCODING         = UTF-8
+
+EXCLUDE_PATTERNS       = */vendor/* \
+                         */node_modules/* \
+                         */dist/* \
+                         */build/* \
+                         */coverage/* \
+                         */.git/* \
+                         */tmp/*

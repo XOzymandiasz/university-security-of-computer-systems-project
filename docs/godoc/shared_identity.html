@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Shared Identity - GoDoc</title>
+    <style>
+        body {
+            font-family: Segoe UI, Arial, sans-serif;
+            margin: 0;
+            background: #f6f8fa;
+            color: #24292f;
+        }
+        header {
+            background: #0d1117;
+            color: white;
+            padding: 20px 32px;
+        }
+        main {
+            max-width: 1100px;
+            margin: 32px auto;
+            background: white;
+            padding: 32px;
+            border-radius: 12px;
+            box-shadow: 0 4px 18px rgba(0,0,0,0.08);
+        }
+        a {
+            color: #0969da;
+            text-decoration: none;
+        }
+        pre {
+            white-space: pre-wrap;
+            font-family: Consolas, monospace;
+            font-size: 14px;
+            line-height: 1.45;
+        }
+        .back {
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+<header>
+    <h1>Shared Identity</h1>
+    <p>./internal/shared/identity</p>
+</header>
+<main>
+    <a class="back" href="index.html">â† PowrĂłt do indeksu</a>
+    <pre>package identity // import "scs/internal/shared/identity"
+
+
+FUNCTIONS
+
+func DecryptWithPrivateKeyBase64(encoded string, privateKey *rsa.PrivateKey) ([]byte, error)
+    DecryptWithPrivateKeyBase64 odszyfrowuje dane kluczem prywatnym RSA.
+
+    Funkcja dekoduje dane z formatu Base64, a następnie odszyfrowuje je
+    algorytmem RSA-OAEP z SHA-256 przy użyciu klucza prywatnego odbiorcy.
+
+    @param encoded Zaszyfrowane dane zakodowane w formacie Base64. @param
+    privateKey Klucz prywatny RSA odbiorcy. @return Odszyfrowane dane jawne lub
+    błąd odszyfrowywania.
+
+func DecryptWithSessionKeyBase64(encoded string, sessionKey []byte) ([]byte, error)
+    DecryptWithSessionKeyBase64 odszyfrowuje dane wspólnym kluczem sesyjnym
+    AES-256.
+
+    Funkcja dekoduje pakiet Base64, odczytuje nonce oraz szyfrogram, a następnie
+    odszyfrowuje dane algorytmem AES-GCM przy użyciu wspólnego klucza sesyjnego.
+
+    @param encoded Zaszyfrowany pakiet danych w formacie Base64. @param
+    sessionKey 256-bitowy klucz sesyjny AES. @return Odszyfrowane dane jawne lub
+    błąd odszyfrowywania.
+
+func DeleteSessionKey(baseDir string) error
+    DeleteSessionKey usuwa lokalnie zapisany klucz sesyjny AES.
+
+    Funkcja usuwa plik klucza sesyjnego po zakończeniu sesji komunikacyjnej.
+    Brak pliku nie jest traktowany jako błąd, ponieważ sesja mogła już zostać
+    wcześniej zamknięta.
+
+    @param baseDir Katalog bazowy, w którym znajduje się plik klucza sesyjnego.
+    @return Błąd usuwania lub nil w przypadku powodzenia.
+
+func EncryptLargePayloadWithPublicKeyBase64(data []byte, pub *rsa.PublicKey) (string, error)
+    EncryptLargePayloadWithPublicKeyBase64 szyfruje większe dane metodą
+    hybrydową.
+
+    Funkcja generuje losowy 256-bitowy klucz AES, szyfruje dane algorytmem
+    AES-GCM, a następnie szyfruje klucz AES za pomocą RSA-OAEP. Cały pakiet
+    wynikowy jest serializowany do JSON i kodowany jako Base64.
+
+    @param data Dane jawne przeznaczone do zaszyfrowania. @param pub Klucz
+    publiczny RSA odbiorcy. @return Pakiet zaszyfrowany metodą hybrydową w
+    formacie Base64 lub błąd.
+
+func EncryptWithPublicKeyBase64(data []byte, pub *rsa.PublicKey) (string, error)
+    EncryptWithPublicKeyBase64 szyfruje dane kluczem publicznym RSA.
+
+    Funkcja wykorzystuje algorytm RSA-OAEP z SHA-256. Wynik szyfrowania
+    jest kodowany do formatu Base64, aby mógł być bezpiecznie przesyłany w
+    komunikatach JSON pomiędzy aplikacjami.
+
+    @param data Dane jawne przeznaczone do zaszyfrowania. @param pub Klucz
+    publiczny RSA odbiorcy. @return Zaszyfrowane dane w formacie Base64 lub błąd
+    szyfrowania.
+
+func EncryptWithSessionKeyBase64(plaintext []byte, sessionKey []byte) (string, error)
+    EncryptWithSessionKeyBase64 szyfruje dane wspólnym kluczem sesyjnym AES-256.
+
+    Funkcja jest używana po pozytywnym uwierzytelnieniu klienta i serwera. Dane
+    są szyfrowane algorytmem AES-GCM z losowym nonce, a wynik jest serializowany
+    do JSON i kodowany jako Base64.
+
+    @param plaintext Dane jawne przeznaczone do zaszyfrowania. @param sessionKey
+    256-bitowy klucz sesyjny AES. @return Zaszyfrowany pakiet danych w formacie
+    Base64 lub błąd.
+
+func EnsureIdentity(baseDir string) error
+    EnsureIdentity tworzy lokalną tożsamość aplikacji, jeśli jeszcze nie
+    istnieje.
+
+    Funkcja przygotowuje katalog bazowy oraz upewnia się, że istnieją dwa klucze
+    RSA: klucz uwierzytelniający, klucz szyfrujący oraz publiczny identyfikator
+    aplikacji. Jest wywoływana podczas inicjalizacji klienta albo serwera przed
+    rejestracją w TTP.
+
+    @param baseDir Katalog bazowy, w którym przechowywane są pliki tożsamości.
+    @return Błąd inicjalizacji tożsamości lub nil w przypadku powodzenia.
+
+func GenerateRandomBytes(size int) ([]byte, error)
+    GenerateRandomBytes generuje losowe bajty o podanej długości.
+
+    Funkcja wykorzystuje kryptograficznie bezpieczny generator losowy z pakietu
+    crypto/rand. Jest używana do tworzenia wartości wymagających wysokiej
+    losowości, takich jak klucze sesyjne, identyfikatory lub nonce.
+
+    @param size Liczba bajtów, które mają zostać wygenerowane. @return
+    Wygenerowane losowe bajty lub błąd generatora losowego.
+
+func LoadCertificate(baseDir string) (string, error)
+    LoadCertificate wczytuje certyfikat z lokalnego magazynu aplikacji.
+
+    Funkcja odczytuje certyfikat zapisany w formacie Base64 z katalogu
+    wskazanego przez parametr baseDir. Certyfikat jest później używany podczas
+    uwierzytelniania aplikacji z udziałem TTP.
+
+    @param baseDir Katalog bazowy, w którym znajduje się plik certyfikatu.
+    @return Certyfikat X.509 w formacie Base64 lub błąd odczytu.
+
+func LoadPrivateKey(path string) (*rsa.PrivateKey, error)
+    LoadPrivateKey wczytuje klucz prywatny RSA z pliku PEM.
+
+    Funkcja odczytuje plik z dysku, dekoduje blok PEM i parsuje znajdujący się w
+    nim klucz prywatny w formacie PKCS#1.
+
+    @param path Ścieżka do pliku zawierającego klucz prywatny RSA. @return Klucz
+    prywatny RSA lub błąd odczytu albo parsowania.
+
+func LoadRegistrationData(baseDir string) (protocol.RegisterRequest, error)
+    LoadRegistrationData przygotowuje dane rejestracyjne aplikacji dla TTP.
+
+    Funkcja odczytuje lokalny identyfikator aplikacji oraz publiczne klucze
+    RSA używane do uwierzytelniania i szyfrowania. Zebrane dane są zwracane
+    jako struktura RegisterRequest, która następnie może zostać wysłana do TTP
+    podczas procesu rejestracji klienta albo serwera.
+
+    @param baseDir Katalog bazowy zawierający pliki lokalnej tożsamości
+    aplikacji. @return Struktura żądania rejestracji lub błąd odczytu danych.
+
+func LoadSessionKey(baseDir string) ([]byte, error)
+    LoadSessionKey wczytuje klucz sesyjny AES z lokalnego magazynu aplikacji.
+
+    Funkcja odczytuje zapisany klucz sesyjny z pliku, a następnie dekoduje go
+    z formatu Base64 do postaci bajtowej używanej przez funkcje szyfrowania i
+    odszyfrowywania danych.
+
+    @param baseDir Katalog bazowy, w którym znajduje się plik klucza sesyjnego.
+    @return Klucz sesyjny AES jako tablica bajtów lub błąd odczytu.
+
+func ParsePublicKeyFromBase64(encoded string) (*rsa.PublicKey, error)
+    ParsePublicKeyFromBase64 parsuje klucz publiczny RSA zapisany w formacie
+    Base64.
+
+    Funkcja dekoduje dane Base64, odczytuje klucz publiczny w formacie PKIX i
+    sprawdza, czy otrzymany klucz jest kluczem RSA.
+
+    @param encoded Klucz publiczny zakodowany w formacie Base64. @return Klucz
+    publiczny RSA lub błąd parsowania.
+
+func SaveCertificate(baseDir string, certificateBase64 string) error
+    SaveCertificate zapisuje certyfikat w lokalnym magazynie aplikacji.
+
+    Funkcja tworzy katalog magazynu, jeśli jeszcze nie istnieje, a następnie
+    zapisuje certyfikat X.509 otrzymany z TTP w formacie Base64.
+
+    @param baseDir Katalog bazowy, w którym ma zostać zapisany certyfikat.
+    @param certificateBase64 Certyfikat X.509 zakodowany w formacie Base64.
+    @return Błąd zapisu lub nil w przypadku powodzenia.
+
+func SaveSessionKey(baseDir string, sessionKey []byte) error
+    SaveSessionKey zapisuje klucz sesyjny AES w lokalnym magazynie aplikacji.
+
+    Funkcja tworzy katalog bazowy, jeśli jeszcze nie istnieje, koduje klucz
+    sesyjny do formatu Base64 i zapisuje go w pliku. Klucz sesyjny jest używany
+    po poprawnym uwierzytelnieniu klienta i serwera przez TTP.
+
+    @param baseDir Katalog bazowy, w którym ma zostać zapisany klucz sesyjny.
+    @param sessionKey Klucz sesyjny AES otrzymany od TTP. @return Błąd zapisu
+    lub nil w przypadku powodzenia.
+
+func SignBase64(data []byte, privateKey *rsa.PrivateKey) (string, error)
+    SignBase64 tworzy podpis cyfrowy danych przy użyciu klucza prywatnego RSA.
+
+    Funkcja oblicza skrót SHA-256 z przekazanych danych, a następnie podpisuje
+    go algorytmem RSA-PSS. Wynikowy podpis jest kodowany do formatu Base64,
+    aby mógł zostać przesłany w komunikatach JSON protokołu.
+
+    @param data Dane, które mają zostać podpisane. @param privateKey Klucz
+    prywatny RSA używany do utworzenia podpisu. @return Podpis cyfrowy w
+    formacie Base64 lub błąd podpisywania.
+
+
+TYPES
+
+type HybridEncryptedPayload struct {
+	EncryptedKey string `json:"encrypted_key"`
+	Nonce        string `json:"nonce"`
+	Ciphertext   string `json:"ciphertext"`
+}
+    HybridEncryptedPayload przechowuje dane zaszyfrowane metodą hybrydową.
+
+    Struktura zawiera zaszyfrowany klucz AES, nonce oraz szyfrogram. Jest
+    używana przy szyfrowaniu większych danych, których nie należy szyfrować
+    bezpośrednio algorytmem RSA.
+</pre>
+</main>
+</body>
+</html>

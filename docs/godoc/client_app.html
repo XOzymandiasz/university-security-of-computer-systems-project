@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Client App - GoDoc</title>
+    <style>
+        body {
+            font-family: Segoe UI, Arial, sans-serif;
+            margin: 0;
+            background: #f6f8fa;
+            color: #24292f;
+        }
+        header {
+            background: #0d1117;
+            color: white;
+            padding: 20px 32px;
+        }
+        main {
+            max-width: 1100px;
+            margin: 32px auto;
+            background: white;
+            padding: 32px;
+            border-radius: 12px;
+            box-shadow: 0 4px 18px rgba(0,0,0,0.08);
+        }
+        a {
+            color: #0969da;
+            text-decoration: none;
+        }
+        pre {
+            white-space: pre-wrap;
+            font-family: Consolas, monospace;
+            font-size: 14px;
+            line-height: 1.45;
+        }
+        .back {
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+<header>
+    <h1>Client App</h1>
+    <p>./internal/client</p>
+</header>
+<main>
+    <a class="back" href="index.html">â† PowrĂłt do indeksu</a>
+    <pre>package client // import "scs/internal/client"
+
+Package client zawiera główną konfigurację i uruchamianie aplikacji klienta.
+
+Pakiet łączy konfigurację, klientów HTTP, przypadki użycia oraz lokalne API
+udostępniane interfejsowi użytkownika.
+
+TYPES
+
+type App struct {
+	// Has unexported fields.
+}
+    App reprezentuje główną aplikację klienta.
+
+    Struktura przechowuje konfigurację, lokalne API HTTP oraz klientów
+    komunikacyjnych używanych do kontaktu z serwerem aplikacyjnym i TTP.
+
+func NewAppFromEnv() (*App, error)
+    NewAppFromEnv tworzy aplikację klienta na podstawie zmiennych
+    środowiskowych.
+
+    Funkcja wczytuje konfigurację, tworzy klientów HTTP dla serwera i TTP,
+    buduje przypadki użycia oraz lokalne API HTTP używane przez interfejs
+    użytkownika.
+
+    @return Wskaźnik do skonfigurowanej aplikacji klienta lub błąd konfiguracji.
+
+func (a *App) Bootstrap() error
+    Bootstrap przygotowuje klienta do pracy w protokole TTP.
+
+    Funkcja pobiera publiczny klucz szyfrujący TTP, tworzy lokalną tożsamość
+    klienta, szyfruje identyfikator klienta kluczem publicznym TTP, rejestruje
+    klienta w TTP oraz zapisuje otrzymany certyfikat X.509.
+
+    @return Błąd inicjalizacji lub nil w przypadku powodzenia.
+
+func (a *App) Run() error
+    Run uruchamia lokalne API HTTP klienta.
+
+    Funkcja startuje serwer HTTP na porcie określonym w konfiguracji. API jest
+    wykorzystywane przez interfejs użytkownika do uwierzytelniania i wysyłania
+    wiadomości do serwera.
+
+    @return Błąd uruchomienia serwera HTTP lub nil po zakończeniu działania.
+
+type Config struct {
+	BaseDir    string
+	Port       string
+	TTPAddr    string
+	ServerAddr string
+}
+    Config przechowuje konfigurację aplikacji klienta.
+
+    Struktura zawiera katalog bazowy lokalnej tożsamości, port lokalnego API,
+    adres usługi TTP oraz adres serwera aplikacyjnego.
+
+func ConfigFromEnv() (Config, error)
+    ConfigFromEnv wczytuje konfigurację klienta ze zmiennych środowiskowych.
+
+    Funkcja wymaga ustawienia zmiennych PORT, TTP_ADDR oraz SERVER_ADDR.
+    Na ich podstawie budowana jest konfiguracja aplikacji klienta.
+
+    @return Konfiguracja klienta lub błąd brakującej zmiennej środowiskowej.
+</pre>
+</main>
+</body>
+</html>

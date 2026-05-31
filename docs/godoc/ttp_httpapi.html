@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>TTP HTTP API - GoDoc</title>
+    <style>
+        body {
+            font-family: Segoe UI, Arial, sans-serif;
+            margin: 0;
+            background: #f6f8fa;
+            color: #24292f;
+        }
+        header {
+            background: #0d1117;
+            color: white;
+            padding: 20px 32px;
+        }
+        main {
+            max-width: 1100px;
+            margin: 32px auto;
+            background: white;
+            padding: 32px;
+            border-radius: 12px;
+            box-shadow: 0 4px 18px rgba(0,0,0,0.08);
+        }
+        a {
+            color: #0969da;
+            text-decoration: none;
+        }
+        pre {
+            white-space: pre-wrap;
+            font-family: Consolas, monospace;
+            font-size: 14px;
+            line-height: 1.45;
+        }
+        .back {
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+<header>
+    <h1>TTP HTTP API</h1>
+    <p>./internal/third-part/httpapi</p>
+</header>
+<main>
+    <a class="back" href="index.html">â† PowrĂłt do indeksu</a>
+    <pre>package httpapi // import "scs/internal/third-part/httpapi"
+
+Package httpapi zawiera API HTTP aplikacji TTP.
+
+Pakiet definiuje interfejs logiki TTP, strukturę serwera HTTP, konstruktor
+oraz routing endpointów wykorzystywanych podczas inicjalizacji, rejestracji i
+uwierzytelniania.
+
+TYPES
+
+type Server struct {
+	// Has unexported fields.
+}
+    Server reprezentuje serwer HTTP aplikacji TTP.
+
+    Struktura przechowuje zależność do logiki TTP, która jest wywoływana przez
+    handlery HTTP obsługujące poszczególne etapy protokołu.
+
+func New(ttp TTPService) *Server
+    New tworzy nową instancję serwera HTTP TTP.
+
+    Funkcja przyjmuje implementację usługi TTP i opakowuje ją w warstwę HTTP,
+    dzięki czemu logika zaufanej strony trzeciej może być dostępna przez REST
+    API.
+
+    @param ttp Implementacja logiki Trusted Third Party. @return Wskaźnik do
+    nowej instancji Server.
+
+func (s *Server) Handler() http.Handler
+    Handler buduje główny router HTTP aplikacji TTP.
+
+    Funkcja rejestruje endpointy sprawdzania stanu, inicjalizacji, rejestracji
+    klienta lub serwera oraz uwierzytelniania stron.
+
+    @return Handler HTTP gotowy do przekazania do serwera net/http.
+
+type TTPService interface {
+	Init() (protocol.InitResponse, error)
+	Register(req protocol.RegisterRequest) (protocol.RegisterResponse, error)
+	Authenticate(req protocol.AuthenticateRequest) (protocol.AuthenticateResponse, error)
+}
+    TTPService definiuje operacje udostępniane przez usługę Trusted Third Party.
+
+    Interfejs oddziela warstwę HTTP od logiki domenowej TTP. Implementacja
+    odpowiada za udostępnienie publicznego klucza TTP, rejestrację stron,
+    wydawanie certyfikatów oraz uwierzytelnianie klienta i serwera.
+</pre>
+</main>
+</body>
+</html>

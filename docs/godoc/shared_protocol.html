@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Shared Protocol - GoDoc</title>
+    <style>
+        body {
+            font-family: Segoe UI, Arial, sans-serif;
+            margin: 0;
+            background: #f6f8fa;
+            color: #24292f;
+        }
+        header {
+            background: #0d1117;
+            color: white;
+            padding: 20px 32px;
+        }
+        main {
+            max-width: 1100px;
+            margin: 32px auto;
+            background: white;
+            padding: 32px;
+            border-radius: 12px;
+            box-shadow: 0 4px 18px rgba(0,0,0,0.08);
+        }
+        a {
+            color: #0969da;
+            text-decoration: none;
+        }
+        pre {
+            white-space: pre-wrap;
+            font-family: Consolas, monospace;
+            font-size: 14px;
+            line-height: 1.45;
+        }
+        .back {
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+<header>
+    <h1>Shared Protocol</h1>
+    <p>./internal/shared/protocol</p>
+</header>
+<main>
+    <a class="back" href="index.html">â† PowrĂłt do indeksu</a>
+    <pre>package protocol // import "scs/internal/shared/protocol"
+
+Package protocol definiuje struktury komunikatów używanych podczas
+uwierzytelniania klienta i serwera z udziałem TTP.
+
+TYPES
+
+type AuthenticateClientPayload struct {
+	ClientID          string `json:"client_id"`
+	ClientCertificate string `json:"client_certificate"`
+	ClientSignature   string `json:"client_signature"`
+}
+    AuthenticateClientPayload reprezentuje dane klienta przekazywane do TTP.
+
+    Pakiet zawiera identyfikator klienta, jego certyfikat oraz podpis cyfrowy.
+    Dane te są szyfrowane przed wysłaniem, aby mogły zostać odczytane wyłącznie
+    przez usługę TTP.
+
+    @field ClientID Identyfikator klienta. @field ClientCertificate Certyfikat
+    X.509 klienta w formacie Base64. @field ClientSignature Podpis cyfrowy
+    klienta potwierdzający jego tożsamość.
+
+type AuthenticateRequest struct {
+	ServerID               string `json:"server_id"`
+	ServerCertificate      string `json:"server_certificate"`
+	ServerSignature        string `json:"server_signature"`
+	ClientEncryptedPayload string `json:"client_encrypted_payload"`
+}
+    AuthenticateRequest reprezentuje żądanie uwierzytelnienia wysyłane do TTP.
+
+    Struktura zawiera dane serwera oraz zaszyfrowany pakiet klienta.
+    TTP wykorzystuje te informacje do weryfikacji certyfikatu serwera, podpisu
+    serwera oraz tożsamości klienta.
+
+    @field ServerID Identyfikator serwera biorącego udział w uwierzytelnianiu.
+    @field ServerCertificate Certyfikat X.509 serwera w formacie Base64.
+    @field ServerSignature Podpis cyfrowy serwera potwierdzający jego tożsamość.
+    @field ClientEncryptedPayload Zaszyfrowany pakiet danych klienta.
+
+type AuthenticateResponse struct {
+	OK                           bool   `json:"ok"`
+	EncryptedSessionKeyForClient string `json:"encrypted_session_key_for_client"`
+	EncryptedSessionKeyForServer string `json:"encrypted_session_key_for_server"`
+	Message                      string `json:"message"`
+}
+    AuthenticateResponse reprezentuje odpowiedź TTP po procesie
+    uwierzytelniania.
+
+    W przypadku powodzenia odpowiedź zawiera klucz sesyjny zaszyfrowany osobno
+    dla klienta oraz serwera. Dzięki temu obie strony mogą uzyskać ten sam klucz
+    AES, ale tylko przy użyciu własnych kluczy prywatnych.
+
+    @field OK Informuje, czy uwierzytelnianie zakończyło się powodzeniem.
+    @field EncryptedSessionKeyForClient Klucz sesyjny zaszyfrowany dla klienta.
+    @field EncryptedSessionKeyForServer Klucz sesyjny zaszyfrowany dla serwera.
+    @field Message Komunikat opisujący wynik operacji.
+
+type ClientAuthenticateRequest struct {
+	ClientEncryptedPayload string `json:"client_encrypted_payload"`
+}
+    ClientAuthenticateRequest reprezentuje żądanie uwierzytelnienia klienta
+    przekazywane do serwera.
+
+    Serwer otrzymuje zaszyfrowany pakiet klienta i przekazuje go dalej do TTP
+    razem ze swoimi danymi uwierzytelniającymi.
+
+    @field ClientEncryptedPayload Zaszyfrowany pakiet danych klienta.
+
+type ClientAuthenticateResponse struct {
+	OK                           bool   `json:"ok"`
+	EncryptedSessionKeyForClient string `json:"encrypted_session_key_for_client"`
+	Message                      string `json:"message"`
+}
+    ClientAuthenticateResponse reprezentuje odpowiedź serwera po
+    uwierzytelnieniu klienta.
+
+    Odpowiedź zawiera wynik operacji oraz klucz sesyjny przeznaczony dla
+    klienta, jeśli TTP pozytywnie zweryfikowało klienta i serwer.
+
+    @field OK Informuje, czy proces uwierzytelniania zakończył się powodzeniem.
+    @field EncryptedSessionKeyForClient Klucz sesyjny zaszyfrowany kluczem
+    publicznym klienta. @field Message Komunikat opisujący wynik operacji.
+
+type EntityRole string
+    EntityRole określa rolę aplikacji biorącej udział w protokole TTP.
+
+    Typ jest używany do rozróżnienia, czy dana tożsamość należy do klienta,
+    czy do serwera podczas rejestracji, certyfikacji i uwierzytelniania.
+
+const (
+	EntityRoleClient EntityRole = "CLIENT"
+	EntityRoleServer EntityRole = "SERVER"
+)
+type InitResponse struct {
+	TTPEncPublicKey string `json:"ttp_enc_public_key"`
+}
+    InitResponse reprezentuje odpowiedź TTP na początkowe żądanie inicjalizacji.
+
+    Struktura zawiera publiczny klucz szyfrujący TTP. Klient lub serwer używa
+    tego klucza do zaszyfrowania danych przesyłanych do TTP podczas dalszych
+    etapów rejestracji i uwierzytelniania.
+
+    @field TTPEncPublicKey Publiczny klucz szyfrujący TTP w formacie Base64.
+
+type MessageRequest struct {
+	EncryptedBody string `json:"encrypted_body"`
+}
+    MessageRequest reprezentuje zaszyfrowane żądanie wysłania wiadomości.
+
+    Struktura jest używana w komunikacji klient-serwer po poprawnym
+    uwierzytelnieniu stron i uzyskaniu wspólnego klucza sesyjnego AES.
+
+    @field EncryptedBody Treść wiadomości zaszyfrowana kluczem sesyjnym.
+
+type MessageResponse struct {
+	EncryptedBody string `json:"encrypted_body"`
+}
+    MessageResponse reprezentuje zaszyfrowaną odpowiedź serwera.
+
+    Odpowiedź zawiera treść zaszyfrowaną tym samym kluczem sesyjnym, który
+    został wcześniej przekazany klientowi i serwerowi przez TTP.
+
+    @field EncryptedBody Treść odpowiedzi zaszyfrowana kluczem sesyjnym.
+
+type RegisterRequest struct {
+	EncryptedID   string     `json:"encrypted_id"`
+	EncPublicKey  string     `json:"enc_public_key"`
+	AuthPublicKey string     `json:"auth_public_key"`
+	Role          EntityRole `json:"role"`
+}
+    RegisterRequest reprezentuje żądanie rejestracji aplikacji w TTP.
+
+    Struktura zawiera identyfikator aplikacji, publiczny klucz szyfrujący,
+    publiczny klucz uwierzytelniający oraz rolę aplikacji. Na podstawie tych
+    danych TTP może utworzyć certyfikat X.509 dla klienta albo serwera.
+
+    @field EncryptedID Identyfikator aplikacji przesyłany do TTP. @field
+    EncPublicKey Publiczny klucz RSA używany do szyfrowania danych dla
+    aplikacji. @field AuthPublicKey Publiczny klucz RSA używany do weryfikacji
+    podpisów aplikacji. @field Role Rola aplikacji w protokole, czyli klient
+    albo serwer.
+
+type RegisterResponse struct {
+	Certificate string `json:"certificate"`
+}
+    RegisterResponse reprezentuje odpowiedź TTP po rejestracji aplikacji.
+
+    Odpowiedź zawiera certyfikat X.509 wygenerowany i podpisany przez TTP.
+    Certyfikat jest później używany podczas procesu uwierzytelniania.
+
+    @field Certificate Certyfikat X.509 aplikacji w formacie Base64.
+
+type UIMessageRequest struct {
+	Body string `json:"body"`
+}
+    UIMessageRequest reprezentuje jawne żądanie wiadomości z interfejsu
+    użytkownika.
+
+    Struktura jest używana między aplikacją webową a lokalnym API klienta.
+    Zawiera niezaszyfrowaną treść wpisaną przez użytkownika, która następnie
+    jest szyfrowana przed wysłaniem do serwera.
+
+    @field Body Jawna treść wiadomości wpisana w interfejsie użytkownika.
+
+type UIMessageResponse struct {
+	Body string `json:"body"`
+}
+    UIMessageResponse reprezentuje jawną odpowiedź zwracaną do interfejsu
+    użytkownika.
+
+    Struktura zawiera odszyfrowaną treść odpowiedzi serwera, która może zostać
+    wyświetlona użytkownikowi w aplikacji webowej.
+
+    @field Body Jawna treść odpowiedzi po odszyfrowaniu.
+</pre>
+</main>
+</body>
+</html>

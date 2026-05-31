@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Client Use Cases - GoDoc</title>
+    <style>
+        body {
+            font-family: Segoe UI, Arial, sans-serif;
+            margin: 0;
+            background: #f6f8fa;
+            color: #24292f;
+        }
+        header {
+            background: #0d1117;
+            color: white;
+            padding: 20px 32px;
+        }
+        main {
+            max-width: 1100px;
+            margin: 32px auto;
+            background: white;
+            padding: 32px;
+            border-radius: 12px;
+            box-shadow: 0 4px 18px rgba(0,0,0,0.08);
+        }
+        a {
+            color: #0969da;
+            text-decoration: none;
+        }
+        pre {
+            white-space: pre-wrap;
+            font-family: Consolas, monospace;
+            font-size: 14px;
+            line-height: 1.45;
+        }
+        .back {
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+<header>
+    <h1>Client Use Cases</h1>
+    <p>./internal/client/usecase</p>
+</header>
+<main>
+    <a class="back" href="index.html">â† PowrĂłt do indeksu</a>
+    <pre>package usecase // import "scs/internal/client/usecase"
+
+Package usecase zawiera przypadki użycia aplikacji klienta.
+
+Pakiet oddziela logikę aplikacyjną od warstwy HTTP i klientów komunikacyjnych.
+
+TYPES
+
+type Authenticate struct {
+	// Has unexported fields.
+}
+    Authenticate realizuje przypadek użycia uwierzytelniania klienta.
+
+    Struktura przechowuje katalog lokalnej tożsamości klienta oraz zależności
+    potrzebne do komunikacji z serwerem i TTP.
+
+func NewAuthenticate(
+	baseDir string,
+	serverClient ServerAuthenticator,
+	ttpClient TTPInitializer,
+) *Authenticate
+    NewAuthenticate tworzy nowy przypadek użycia uwierzytelniania klienta.
+
+    Funkcja przyjmuje katalog bazowy lokalnej tożsamości oraz klientów
+    komunikacyjnych używanych do kontaktu z serwerem i TTP.
+
+    @param baseDir Katalog bazowy lokalnej tożsamości klienta. @param
+    serverClient Klient odpowiedzialny za wysłanie żądania uwierzytelnienia
+    do serwera. @param ttpClient Klient odpowiedzialny za pobranie publicznego
+    klucza TTP. @return Wskaźnik do nowej instancji Authenticate.
+
+func (a *Authenticate) Authenticate() error
+    Authenticate wykonuje proces uwierzytelniania klienta z udziałem TTP.
+
+    Funkcja pobiera publiczny klucz TTP, odczytuje lokalne dane klienta,
+    ładuje certyfikat i klucz prywatny klienta, tworzy podpis identyfikatora,
+    szyfruje pakiet uwierzytelniający dla TTP, a następnie przekazuje go do
+    serwera. Po pozytywnej odpowiedzi odszyfrowuje klucz sesyjny AES i zapisuje
+    go lokalnie do dalszej komunikacji z serwerem.
+
+    @return Błąd procesu uwierzytelniania lub nil w przypadku powodzenia.
+
+type MessageReader interface {
+	ReadMessage(msg string) (string, error)
+}
+    MessageReader definiuje operację odczytu wiadomości z serwera.
+
+    Interfejs pozwala przypadkowi użycia korzystać z dowolnej implementacji,
+    która potrafi wysłać wiadomość do serwera i zwrócić jego odpowiedź.
+
+type ReadMessage struct {
+	// Has unexported fields.
+}
+    ReadMessage reprezentuje przypadek użycia wysłania wiadomości do serwera.
+
+    Struktura opakowuje właściwy komponent komunikacyjny i udostępnia prostą
+    metodę wykorzystywaną przez lokalne API HTTP klienta.
+
+func NewReadMessage(reader MessageReader) *ReadMessage
+    NewReadMessage tworzy nowy przypadek użycia odczytu wiadomości.
+
+    @param reader Komponent odpowiedzialny za komunikację z serwerem. @return
+    Wskaźnik do nowej instancji ReadMessage.
+
+func (r *ReadMessage) ReadMessage(msg string) (string, error)
+    ReadMessage wysyła wiadomość do komponentu odpowiedzialnego za komunikację.
+
+    Funkcja deleguje obsługę wiadomości do obiektu reader. W praktyce oznacza to
+    zaszyfrowanie wiadomości, wysłanie jej do serwera i zwrócenie odszyfrowanej
+    odpowiedzi.
+
+    @param msg Jawna treść wiadomości wpisana przez użytkownika. @return
+    Odpowiedź serwera lub błąd komunikacji.
+
+type ServerAuthenticator interface {
+	Authenticate(req protocol.ClientAuthenticateRequest) (protocol.ClientAuthenticateResponse, error)
+}
+    ServerAuthenticator definiuje operację uwierzytelnienia klienta przez
+    serwer.
+
+    Interfejs pozwala warstwie przypadku użycia wywołać serwer bez zależności od
+    konkretnej implementacji klienta HTTP.
+
+type TTPInitializer interface {
+	Init() (*rsa.PublicKey, error)
+}
+    TTPInitializer definiuje operację pobrania publicznego klucza TTP.
+
+    Interfejs jest używany przed zaszyfrowaniem pakietu klienta, aby aplikacja
+    mogła pozyskać aktualny publiczny klucz szyfrujący Trusted Third Party.
+</pre>
+</main>
+</body>
+</html>

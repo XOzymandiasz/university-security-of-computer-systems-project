@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Client HTTP API - GoDoc</title>
+    <style>
+        body {
+            font-family: Segoe UI, Arial, sans-serif;
+            margin: 0;
+            background: #f6f8fa;
+            color: #24292f;
+        }
+        header {
+            background: #0d1117;
+            color: white;
+            padding: 20px 32px;
+        }
+        main {
+            max-width: 1100px;
+            margin: 32px auto;
+            background: white;
+            padding: 32px;
+            border-radius: 12px;
+            box-shadow: 0 4px 18px rgba(0,0,0,0.08);
+        }
+        a {
+            color: #0969da;
+            text-decoration: none;
+        }
+        pre {
+            white-space: pre-wrap;
+            font-family: Consolas, monospace;
+            font-size: 14px;
+            line-height: 1.45;
+        }
+        .back {
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+<header>
+    <h1>Client HTTP API</h1>
+    <p>./internal/client/httpapi</p>
+</header>
+<main>
+    <a class="back" href="index.html">â† PowrĂłt do indeksu</a>
+    <pre>package httpapi // import "scs/internal/client/httpapi"
+
+Package httpapi zawiera lokalne API HTTP klienta.
+
+Pakiet udostępnia endpointy używane przez interfejs użytkownika do uruchamiania
+uwierzytelniania oraz wysyłania wiadomości do serwera po zestawieniu sesji.
+
+TYPES
+
+type AuthenticateUseCase interface {
+	Authenticate() error
+}
+    AuthenticateUseCase definiuje operację uwierzytelniania klienta.
+
+    Implementacja tego interfejsu wykonuje proces uwierzytelnienia z udziałem
+    klienta, serwera oraz TTP, a po sukcesie zapisuje lokalny klucz sesyjny.
+
+type ReadMessageUseCase interface {
+	ReadMessage(msg string) (string, error)
+}
+    ReadMessageUseCase definiuje operację wysyłania wiadomości do serwera.
+
+    Interfejs oddziela warstwę HTTP od logiki aplikacyjnej odpowiedzialnej za
+    szyfrowanie wiadomości, komunikację z serwerem i odszyfrowanie odpowiedzi.
+
+type Server struct {
+	// Has unexported fields.
+}
+    Server reprezentuje lokalny serwer HTTP klienta.
+
+    Struktura przechowuje zależności do przypadków użycia oraz katalog bazowy,
+    w którym zapisywany jest lokalny stan klienta, między innymi klucz sesyjny.
+
+func New(
+	readMessage ReadMessageUseCase,
+	authenticate AuthenticateUseCase,
+	baseDir string,
+) *Server
+    New tworzy nową instancję lokalnego serwera HTTP klienta.
+
+    Funkcja przyjmuje implementacje przypadków użycia oraz katalog bazowy
+    lokalnej tożsamości, a następnie zwraca gotową strukturę Server.
+
+    @param readMessage Przypadek użycia odpowiedzialny za wysyłanie wiadomości.
+    @param authenticate Przypadek użycia odpowiedzialny za uwierzytelnianie
+    klienta. @param baseDir Katalog bazowy lokalnej tożsamości klienta. @return
+    Wskaźnik do nowej instancji Server.
+
+func (s *Server) Handler() http.Handler
+    Handler buduje główny router HTTP lokalnego API klienta.
+
+    Funkcja rejestruje endpoint sprawdzający stan aplikacji, endpoint wysyłania
+    wiadomości oraz endpoint uruchamiający proces uwierzytelniania.
+
+    @return Handler HTTP gotowy do przekazania do serwera net/http.
+</pre>
+</main>
+</body>
+</html>

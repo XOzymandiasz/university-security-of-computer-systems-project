@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Server App - GoDoc</title>
+    <style>
+        body {
+            font-family: Segoe UI, Arial, sans-serif;
+            margin: 0;
+            background: #f6f8fa;
+            color: #24292f;
+        }
+        header {
+            background: #0d1117;
+            color: white;
+            padding: 20px 32px;
+        }
+        main {
+            max-width: 1100px;
+            margin: 32px auto;
+            background: white;
+            padding: 32px;
+            border-radius: 12px;
+            box-shadow: 0 4px 18px rgba(0,0,0,0.08);
+        }
+        a {
+            color: #0969da;
+            text-decoration: none;
+        }
+        pre {
+            white-space: pre-wrap;
+            font-family: Consolas, monospace;
+            font-size: 14px;
+            line-height: 1.45;
+        }
+        .back {
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+<header>
+    <h1>Server App</h1>
+    <p>./internal/server</p>
+</header>
+<main>
+    <a class="back" href="index.html">â† PowrĂłt do indeksu</a>
+    <pre>package server // import "scs/internal/server"
+
+Package server zawiera główną konfigurację i uruchamianie aplikacji serwera.
+
+Pakiet łączy konfigurację, klienta HTTP do komunikacji z TTP, lokalne API
+serwera oraz proces rejestracji serwera w zaufanej stronie trzeciej.
+
+TYPES
+
+type App struct {
+	// Has unexported fields.
+}
+    App reprezentuje główną aplikację serwera.
+
+    Struktura przechowuje konfigurację serwera, API HTTP oraz klienta TTP
+    używanego do rejestracji i uwierzytelniania z udziałem Trusted Third Party.
+
+func NewAppFromEnv() (*App, error)
+    NewAppFromEnv tworzy aplikację serwera na podstawie zmiennych
+    środowiskowych.
+
+    Funkcja wczytuje konfigurację, tworzy klienta HTTP do komunikacji z TTP,
+    buduje lokalne API HTTP serwera i zwraca gotową instancję aplikacji.
+
+    @return Wskaźnik do skonfigurowanej aplikacji serwera lub błąd konfiguracji.
+
+func (a *App) Bootstrap() error
+    Bootstrap przygotowuje serwer do udziału w protokole TTP.
+
+    Funkcja pobiera publiczny klucz szyfrujący TTP, tworzy lokalną tożsamość
+    serwera, szyfruje identyfikator serwera dla TTP, rejestruje serwer jako
+    EntityRoleServer oraz zapisuje otrzymany certyfikat X.509.
+
+    @return Błąd inicjalizacji lub nil w przypadku powodzenia.
+
+func (a *App) Run() error
+    Run uruchamia API HTTP serwera.
+
+    Funkcja startuje serwer HTTP na porcie określonym w konfiguracji.
+    Endpointy serwera obsługują uwierzytelnianie klienta oraz szyfrowaną wymianę
+    wiadomości po ustanowieniu klucza sesyjnego.
+
+    @return Błąd uruchomienia serwera HTTP lub nil po zakończeniu działania.
+
+type Config struct {
+	BaseDir     string
+	MessagePath string
+	Port        string
+	TTPAddr     string
+}
+    Config przechowuje konfigurację aplikacji serwera.
+
+    Struktura zawiera katalog bazowy lokalnej tożsamości, ścieżkę wiadomości,
+    port lokalnego API oraz adres usługi TTP.
+
+func ConfigFromEnv() (Config, error)
+    ConfigFromEnv wczytuje konfigurację serwera ze zmiennych środowiskowych.
+
+    Funkcja wymaga ustawienia zmiennych PORT oraz TTP_ADDR. Na ich podstawie
+    budowana jest konfiguracja aplikacji serwera.
+
+    @return Konfiguracja serwera lub błąd brakującej zmiennej środowiskowej.
+</pre>
+</main>
+</body>
+</html>

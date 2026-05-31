@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>TTP Service - GoDoc</title>
+    <style>
+        body {
+            font-family: Segoe UI, Arial, sans-serif;
+            margin: 0;
+            background: #f6f8fa;
+            color: #24292f;
+        }
+        header {
+            background: #0d1117;
+            color: white;
+            padding: 20px 32px;
+        }
+        main {
+            max-width: 1100px;
+            margin: 32px auto;
+            background: white;
+            padding: 32px;
+            border-radius: 12px;
+            box-shadow: 0 4px 18px rgba(0,0,0,0.08);
+        }
+        a {
+            color: #0969da;
+            text-decoration: none;
+        }
+        pre {
+            white-space: pre-wrap;
+            font-family: Consolas, monospace;
+            font-size: 14px;
+            line-height: 1.45;
+        }
+        .back {
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+<header>
+    <h1>TTP Service</h1>
+    <p>./internal/third-part/ttpservice</p>
+</header>
+<main>
+    <a class="back" href="index.html">â† PowrĂłt do indeksu</a>
+    <pre>package ttpservice // import "scs/internal/third-part/ttpservice"
+
+Package ttpservice zawiera logikę usługi Trusted Third Party.
+
+Pakiet odpowiada za tworzenie, parsowanie i walidację certyfikatów X.509
+używanych podczas rejestracji oraz uwierzytelniania klienta i serwera.
+
+FUNCTIONS
+
+func CreateCertificateBase64(
+	subjectID string,
+	subjectPublicKey *rsa.PublicKey,
+	issuerPrivateKey *rsa.PrivateKey,
+) (string, error)
+    CreateCertificateBase64 tworzy certyfikat X.509 dla klienta lub serwera.
+
+    Funkcja generuje certyfikat dla podanego identyfikatora i klucza
+    publicznego. Certyfikat jest podpisywany kluczem prywatnym TTP, dzięki czemu
+    może być później weryfikowany podczas procesu uwierzytelniania.
+
+    @param subjectID Identyfikator podmiotu, dla którego tworzony jest
+    certyfikat. @param subjectPublicKey Klucz publiczny RSA podmiotu. @param
+    issuerPrivateKey Klucz prywatny RSA TTP używany do podpisania certyfikatu.
+    @return Certyfikat X.509 zakodowany w formacie Base64 lub błąd tworzenia.
+
+func DecryptLargePayloadWithPrivateKeyBase64(encoded string, privateKey *rsa.PrivateKey) ([]byte, error)
+    DecryptLargePayloadWithPrivateKeyBase64 odszyfrowuje większy pakiet danych
+    metodą hybrydową.
+
+    Funkcja dekoduje pakiet Base64, odczytuje zaszyfrowany klucz AES, nonce oraz
+    szyfrogram. Następnie odszyfrowuje klucz AES przy użyciu prywatnego klucza
+    RSA TTP i wykorzystuje go do odszyfrowania danych algorytmem AES-GCM.
+
+    @param encoded Zaszyfrowany pakiet hybrydowy zakodowany w formacie Base64.
+    @param privateKey Prywatny klucz RSA TTP używany do odszyfrowania klucza
+    AES. @return Odszyfrowane dane jawne lub błąd odszyfrowywania.
+
+func ParseCertificateBase64(encoded string) (*x509.Certificate, error)
+    ParseCertificateBase64 parsuje certyfikat X.509 zapisany w formacie Base64.
+
+    Funkcja dekoduje dane Base64 do postaci DER, a następnie odczytuje
+    certyfikat przy użyciu standardowego parsera x509.
+
+    @param encoded Certyfikat X.509 zakodowany w formacie Base64. @return
+    Struktura certyfikatu X.509 lub błąd parsowania.
+
+func ValidateCertificateBase64(
+	certificateBase64 string,
+	expectedSubjectID string,
+	expectedPublicKeyBase64 string,
+	issuerPublicKey *rsa.PublicKey,
+) error
+    ValidateCertificateBase64 weryfikuje poprawność certyfikatu X.509.
+
+    Funkcja sprawdza poprawność okresu ważności, zgodność identyfikatora,
+    zgodność klucza publicznego oraz podpis certyfikatu wykonany przez TTP.
+    Negatywny wynik walidacji oznacza, że certyfikat jest nieważny, nie pasuje
+    do deklarowanej tożsamości albo został podrobiony.
+
+    @param certificateBase64 Certyfikat X.509 zakodowany w formacie Base64.
+    @param expectedSubjectID Oczekiwany identyfikator właściciela certyfikatu.
+    @param expectedPublicKeyBase64 Oczekiwany klucz publiczny właściciela w
+    formacie Base64. @param issuerPublicKey Publiczny klucz RSA TTP używany do
+    weryfikacji podpisu. @return Błąd walidacji certyfikatu lub nil w przypadku
+    powodzenia.
+
+func VerifySignatureBase64(data []byte, signatureBase64 string, publicKey *rsa.PublicKey) error
+    VerifySignatureBase64 weryfikuje podpis cyfrowy RSA-PSS zapisany w formacie
+    Base64.
+
+    Funkcja dekoduje podpis z formatu Base64, oblicza skrót SHA-256 z
+    przekazanych danych, a następnie sprawdza podpis przy użyciu publicznego
+    klucza RSA danego podmiotu.
+
+    @param data Dane, których podpis ma zostać zweryfikowany. @param
+    signatureBase64 Podpis cyfrowy zakodowany w formacie Base64. @param
+    publicKey Publiczny klucz RSA używany do weryfikacji podpisu. @return Błąd
+    weryfikacji podpisu lub nil w przypadku poprawnego podpisu.
+
+
+TYPES
+
+type RegisteredEntity struct {
+	ID            string
+	Role          string
+	EncPublicKey  string
+	AuthPublicKey string
+	Certificate   string
+}
+    RegisteredEntity reprezentuje podmiot zarejestrowany w TTP.
+
+    Struktura przechowuje identyfikator aplikacji, jej rolę, publiczne
+    klucze RSA oraz certyfikat X.509 wydany przez TTP. Dane te są później
+    wykorzystywane podczas walidacji tożsamości klienta lub serwera.
+
+    @field ID Identyfikator zarejestrowanego podmiotu. @field Role Rola
+    podmiotu w protokole, na przykład klient albo serwer. @field EncPublicKey
+    Publiczny klucz RSA używany do szyfrowania danych dla podmiotu. @field
+    AuthPublicKey Publiczny klucz RSA używany do weryfikacji podpisów podmiotu.
+    @field Certificate Certyfikat X.509 wydany przez TTP.
+
+type Service struct {
+	// Has unexported fields.
+}
+    Service reprezentuje usługę Trusted Third Party.
+
+    Struktura przechowuje katalog bazowy lokalnej tożsamości TTP oraz mapę
+    zarejestrowanych podmiotów, czyli klientów i serwerów uczestniczących w
+    protokole.
+
+func New(baseDir string) *Service
+    New tworzy nową instancję usługi TTP.
+
+    Funkcja inicjalizuje pusty rejestr podmiotów oraz zapisuje katalog bazowy,
+    z którego TTP odczytuje własne klucze RSA.
+
+    @param baseDir Katalog bazowy lokalnej tożsamości TTP. @return Wskaźnik do
+    nowej instancji Service.
+
+func (s *Service) Authenticate(req protocol.AuthenticateRequest) (protocol.AuthenticateResponse, error)
+    Authenticate uwierzytelnia klienta i serwer z udziałem TTP.
+
+    Funkcja weryfikuje, czy serwer i klient są zarejestrowani, sprawdza ich
+    role, waliduje certyfikaty X.509 oraz podpisy cyfrowe. Po pozytywnej
+    walidacji generuje 256-bitowy klucz sesyjny AES i szyfruje go osobno
+    kluczami publicznymi klienta oraz serwera.
+
+    @param req Żądanie uwierzytelnienia zawierające dane serwera i zaszyfrowany
+    pakiet klienta. @return Odpowiedź z zaszyfrowanymi kluczami sesyjnymi lub
+    błąd walidacji.
+
+func (s *Service) Init() (protocol.InitResponse, error)
+    Init zwraca publiczny klucz szyfrujący TTP.
+
+    Funkcja odczytuje lokalne dane rejestracyjne TTP i zwraca publiczny klucz,
+    którym klient oraz serwer mogą szyfrować dane przesyłane do zaufanej strony
+    trzeciej.
+
+    @return Odpowiedź inicjalizacyjna zawierająca publiczny klucz TTP lub błąd.
+
+func (s *Service) Register(reg protocol.RegisterRequest) (protocol.RegisterResponse, error)
+    Register rejestruje klienta albo serwer w usłudze TTP.
+
+    Funkcja odszyfrowuje identyfikator podmiotu kluczem prywatnym TTP, parsuje
+    publiczny klucz uwierzytelniający, generuje certyfikat X.509 i zapisuje
+    podmiot w lokalnym rejestrze zarejestrowanych aplikacji.
+
+    @param reg Żądanie rejestracji zawierające zaszyfrowany identyfikator,
+    publiczne klucze RSA oraz rolę podmiotu. @return Odpowiedź rejestracji z
+    certyfikatem X.509 lub błąd.
+</pre>
+</main>
+</body>
+</html>

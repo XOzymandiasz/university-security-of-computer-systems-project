@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Client HTTP Client - GoDoc</title>
+    <style>
+        body {
+            font-family: Segoe UI, Arial, sans-serif;
+            margin: 0;
+            background: #f6f8fa;
+            color: #24292f;
+        }
+        header {
+            background: #0d1117;
+            color: white;
+            padding: 20px 32px;
+        }
+        main {
+            max-width: 1100px;
+            margin: 32px auto;
+            background: white;
+            padding: 32px;
+            border-radius: 12px;
+            box-shadow: 0 4px 18px rgba(0,0,0,0.08);
+        }
+        a {
+            color: #0969da;
+            text-decoration: none;
+        }
+        pre {
+            white-space: pre-wrap;
+            font-family: Consolas, monospace;
+            font-size: 14px;
+            line-height: 1.45;
+        }
+        .back {
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+<header>
+    <h1>Client HTTP Client</h1>
+    <p>./internal/client/client</p>
+</header>
+<main>
+    <a class="back" href="index.html">â† PowrĂłt do indeksu</a>
+    <pre>package client // import "scs/internal/client/client"
+
+Package client zawiera klienta HTTP używanego do komunikacji z TTP oraz serwerem
+aplikacyjnym w ramach protokołu uwierzytelniania.
+
+TYPES
+
+type Client struct {
+	// Has unexported fields.
+}
+    Client reprezentuje klienta HTTP komunikującego się z wybraną usługą.
+
+    Struktura przechowuje adres zdalnej usługi oraz katalog bazowy lokalnej
+    tożsamości aplikacji, w którym znajdują się certyfikaty, klucze i klucz
+    sesyjny.
+
+func New(addr string, baseDir string) *Client
+    New tworzy nową instancję klienta HTTP.
+
+    Funkcja zapisuje adres usługi oraz katalog bazowy tożsamości aplikacji.
+    Utworzony klient może następnie wykonywać żądania inicjalizacji,
+    rejestracji, uwierzytelniania i wymiany wiadomości.
+
+    @param addr Adres zdalnej usługi w formacie host:port. @param baseDir
+    Katalog bazowy lokalnej tożsamości aplikacji. @return Wskaźnik do nowej
+    instancji klienta.
+
+func (c *Client) Authenticate(req protocol.ClientAuthenticateRequest) (protocol.ClientAuthenticateResponse, error)
+    Authenticate wysyła żądanie uwierzytelnienia klienta do serwera.
+
+    Funkcja przekazuje do serwera zaszyfrowany pakiet klienta. Serwer rozszerza
+    żądanie o własne dane i przekazuje je do TTP. Po pozytywnej weryfikacji
+    odpowiedź zawiera klucz sesyjny zaszyfrowany dla klienta.
+
+    @param req Żądanie uwierzytelnienia klienta zawierające zaszyfrowany pakiet.
+    @return Odpowiedź uwierzytelniania lub błąd w przypadku odrzucenia.
+
+func (c *Client) Init() (*rsa.PublicKey, error)
+    Init pobiera publiczny klucz szyfrujący TTP.
+
+    Funkcja wysyła żądanie inicjalizacyjne do TTP, odbiera publiczny klucz
+    szyfrujący TTP w formacie Base64 i parsuje go do struktury RSA. Klucz ten
+    jest używany do szyfrowania danych przesyłanych do TTP.
+
+    @return Publiczny klucz RSA usługi TTP lub błąd żądania.
+
+func (c *Client) ReadMessage(msg string) (string, error)
+    ReadMessage wysyła zaszyfrowaną wiadomość do serwera i odczytuje odpowiedź.
+
+    Funkcja wczytuje lokalny klucz sesyjny AES, szyfruje treść wiadomości,
+    wysyła ją do serwera, a następnie odszyfrowuje otrzymaną odpowiedź.
+    Po zakończeniu wymiany usuwa lokalny klucz sesyjny, zamykając sesję.
+
+    @param msg Jawna treść wiadomości wpisana przez użytkownika. @return
+    Odszyfrowana odpowiedź serwera lub błąd komunikacji.
+
+func (c *Client) Register(req protocol.RegisterRequest) (string, error)
+    Register rejestruje klienta lub serwer w usłudze TTP.
+
+    Funkcja wysyła żądanie rejestracyjne zawierające identyfikator, klucze
+    publiczne oraz rolę aplikacji. W odpowiedzi TTP zwraca certyfikat X.509,
+    który jest później wykorzystywany w procesie uwierzytelniania.
+
+    @param req Dane rejestracyjne aplikacji. @return Certyfikat X.509 w formacie
+    Base64 lub błąd rejestracji.
+</pre>
+</main>
+</body>
+</html>
