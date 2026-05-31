@@ -12,6 +12,12 @@ services:
       PORT: 8081
     networks:
       - scs-net
+    healthcheck:
+      test: [ "CMD-SHELL", "wget -qO- http://localhost:8081/health || exit 1" ]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
 
   server:
     build:
@@ -26,8 +32,14 @@ services:
     networks:
       - scs-net
     depends_on:
-      - ttp
-    command: sh -c "sleep 4 && /app/server"
+      ttp:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD-SHELL", "wget -qO- http://localhost:8080/health || exit 1" ]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
 
   client:
     build:
@@ -43,9 +55,16 @@ services:
     networks:
       - scs-net
     depends_on:
-      - ttp
-      - server
-    command: sh -c "sleep 4 && /app/client"
+      ttp:
+        condition: service_healthy
+      server:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD-SHELL", "wget -qO- http://localhost:8082/health || exit 1" ]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
 
   ui:
     build:
@@ -57,9 +76,12 @@ services:
       - ./ui:/app
       - ui_node_modules:/app/node_modules
     depends_on:
-      - client
-      - server
-      - ttp
+      client:
+        condition: service_healthy
+      server:
+        condition: service_healthy
+      ttp:
+        condition: service_healthy
     networks:
       - scs-net
 
