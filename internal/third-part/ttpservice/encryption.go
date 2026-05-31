@@ -8,9 +8,19 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
+
 	"scs/internal/shared/identity"
 )
 
+// DecryptLargePayloadWithPrivateKeyBase64 odszyfrowuje większy pakiet danych metodą hybrydową.
+//
+// Funkcja dekoduje pakiet Base64, odczytuje zaszyfrowany klucz AES, nonce
+// oraz szyfrogram. Następnie odszyfrowuje klucz AES przy użyciu prywatnego
+// klucza RSA TTP i wykorzystuje go do odszyfrowania danych algorytmem AES-GCM.
+//
+// @param encoded Zaszyfrowany pakiet hybrydowy zakodowany w formacie Base64.
+// @param privateKey Prywatny klucz RSA TTP używany do odszyfrowania klucza AES.
+// @return Odszyfrowane dane jawne lub błąd odszyfrowywania.
 func DecryptLargePayloadWithPrivateKeyBase64(encoded string, privateKey *rsa.PrivateKey) ([]byte, error) {
 	payloadBytes, err := base64.StdEncoding.DecodeString(encoded)
 	if err != nil {

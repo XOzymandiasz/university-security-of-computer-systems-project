@@ -1,3 +1,5 @@
+// Package client zawiera klienta HTTP używanego do komunikacji z TTP
+// oraz serwerem aplikacyjnym w ramach protokołu uwierzytelniania.
 package client
 
 import (
@@ -7,15 +9,28 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	identity2 "scs/internal/shared/identity"
-	protocol2 "scs/internal/shared/protocol"
+	"scs/internal/shared/identity"
+	"scs/internal/shared/protocol"
 )
 
+// Client reprezentuje klienta HTTP komunikującego się z wybraną usługą.
+//
+// Struktura przechowuje adres zdalnej usługi oraz katalog bazowy lokalnej
+// tożsamości aplikacji, w którym znajdują się certyfikaty, klucze i klucz sesyjny.
 type Client struct {
 	addr    string
 	baseDir string
 }
 
+// New tworzy nową instancję klienta HTTP.
+//
+// Funkcja zapisuje adres usługi oraz katalog bazowy tożsamości aplikacji.
+// Utworzony klient może następnie wykonywać żądania inicjalizacji,
+// rejestracji, uwierzytelniania i wymiany wiadomości.
+//
+// @param addr Adres zdalnej usługi w formacie host:port.
+// @param baseDir Katalog bazowy lokalnej tożsamości aplikacji.
+// @return Wskaźnik do nowej instancji klienta.
 func New(addr string, baseDir string) *Client {
 	return &Client{
 		addr:    addr,
@@ -23,6 +38,13 @@ func New(addr string, baseDir string) *Client {
 	}
 }
 
+// Init pobiera publiczny klucz szyfrujący TTP.
+//
+// Funkcja wysyła żądanie inicjalizacyjne do TTP, odbiera publiczny klucz
+// szyfrujący TTP w formacie Base64 i parsuje go do struktury RSA.
+// Klucz ten jest używany do szyfrowania danych przesyłanych do TTP.
+//
+// @return Publiczny klucz RSA usługi TTP lub błąd żądania.
 func (c *Client) Init() (*rsa.PublicKey, error) {
 	resp, err := http.Get(c.url("/api/init"))
 	if err != nil {
@@ -40,7 +62,7 @@ func (c *Client) Init() (*rsa.PublicKey, error) {
 		return nil, fmt.Errorf("ttp init failed: status=%d body=%s", resp.StatusCode, string(body))
 	}
 
-	var response protocol2.InitResponse
+	var response protocol.InitResponse
 	if err = json.NewDecoder(resp.Body).Decode(&response); err != nil {
 		return nil, fmt.Errorf("decode init response: %w", err)
 	}
@@ -48,7 +70,7 @@ func (c *Client) Init() (*rsa.PublicKey, error) {
 	keyBase64 := response.TTPEncPublicKey
 
 	var key *rsa.PublicKey
-	key, err = identity2.ParsePublicKeyFromBase64(keyBase64)
+	key, err = identity.ParsePublicKeyFromBase64(keyBase64)
 	if err != nil {
 		return nil, fmt.Errorf("parse public key: %w", err)
 	}
@@ -56,7 +78,15 @@ func (c *Client) Init() (*rsa.PublicKey, error) {
 	return key, nil
 }
 
-func (c *Client) Register(req protocol2.RegisterRequest) (string, error) {
+// Register rejestruje klienta lub serwer w usłudze TTP.
+//
+// Funkcja wysyła żądanie rejestracyjne zawierające identyfikator, klucze
+// publiczne oraz rolę aplikacji. W odpowiedzi TTP zwraca certyfikat X.509,
+// który jest później wykorzystywany w procesie uwierzytelniania.
+//
+// @param req Dane rejestracyjne aplikacji.
+// @return Certyfikat X.509 w formacie Base64 lub błąd rejestracji.
+func (c *Client) Register(req protocol.RegisterRequest) (string, error) {
 	body, err := json.Marshal(req)
 	if err != nil {
 		return "", fmt.Errorf("marshal register request: %w", err)
@@ -88,7 +118,7 @@ func (c *Client) Register(req protocol2.RegisterRequest) (string, error) {
 		return "", fmt.Errorf("ttp register failed: status=%d body=%s", resp.StatusCode, string(body))
 	}
 
-	var response protocol2.RegisterResponse
+	var response protocol.RegisterResponse
 	if err = json.NewDecoder(resp.Body).Decode(&response); err != nil {
 		return "", fmt.Errorf("decode register response: %w", err)
 	}
@@ -100,10 +130,18 @@ func (c *Client) Register(req protocol2.RegisterRequest) (string, error) {
 	return response.Certificate, nil
 }
 
-func (c *Client) Authenticate(req protocol2.ClientAuthenticateRequest) (protocol2.ClientAuthenticateResponse, error) {
+// Authenticate wysyła żądanie uwierzytelnienia klienta do serwera.
+//
+// Funkcja przekazuje do serwera zaszyfrowany pakiet klienta. Serwer rozszerza
+// żądanie o własne dane i przekazuje je do TTP. Po pozytywnej weryfikacji
+// odpowiedź zawiera klucz sesyjny zaszyfrowany dla klienta.
+//
+// @param req Żądanie uwierzytelnienia klienta zawierające zaszyfrowany pakiet.
+// @return Odpowiedź uwierzytelniania lub błąd w przypadku odrzucenia.
+func (c *Client) Authenticate(req protocol.ClientAuthenticateRequest) (protocol.ClientAuthenticateResponse, error) {
 	body, err := json.Marshal(req)
 	if err != nil {
-		return protocol2.ClientAuthenticateResponse{}, fmt.Errorf("marshal client authenticate request: %w", err)
+		return protocol.ClientAuthenticateResponse{}, fmt.Errorf("marshal client authenticate request: %w", err)
 	}
 
 	var httpReq *http.Request
@@ -113,7 +151,7 @@ func (c *Client) Authenticate(req protocol2.ClientAuthenticateRequest) (protocol
 		bytes.NewReader(body),
 	)
 	if err != nil {
-		return protocol2.ClientAuthenticateResponse{}, fmt.Errorf("create client authenticate request: %w", err)
+		return protocol.ClientAuthenticateResponse{}, fmt.Errorf("create client authenticate request: %w", err)
 	}
 
 	httpReq.Header.Set("Content-Type", "application/json")
@@ -121,7 +159,7 @@ func (c *Client) Authenticate(req protocol2.ClientAuthenticateRequest) (protocol
 	var resp *http.Response
 	resp, err = http.DefaultClient.Do(httpReq)
 	if err != nil {
-		return protocol2.ClientAuthenticateResponse{}, fmt.Errorf("client authenticate request: %w", err)
+		return protocol.ClientAuthenticateResponse{}, fmt.Errorf("client authenticate request: %w", err)
 	}
 	defer func() {
 		_ = resp.Body.Close()
@@ -129,38 +167,46 @@ func (c *Client) Authenticate(req protocol2.ClientAuthenticateRequest) (protocol
 
 	if resp.StatusCode != http.StatusOK {
 		respBody, _ := io.ReadAll(resp.Body)
-		return protocol2.ClientAuthenticateResponse{}, fmt.Errorf(
+		return protocol.ClientAuthenticateResponse{}, fmt.Errorf(
 			"client authenticate failed: status=%d body=%s",
 			resp.StatusCode,
 			string(respBody),
 		)
 	}
 
-	var response protocol2.ClientAuthenticateResponse
+	var response protocol.ClientAuthenticateResponse
 	if err = json.NewDecoder(resp.Body).Decode(&response); err != nil {
-		return protocol2.ClientAuthenticateResponse{}, fmt.Errorf("decode client authenticate response: %w", err)
+		return protocol.ClientAuthenticateResponse{}, fmt.Errorf("decode client authenticate response: %w", err)
 	}
 
 	if !response.OK {
-		return protocol2.ClientAuthenticateResponse{}, fmt.Errorf("authentication rejected: %s", response.Message)
+		return protocol.ClientAuthenticateResponse{}, fmt.Errorf("authentication rejected: %s", response.Message)
 	}
 
 	return response, nil
 }
 
+// ReadMessage wysyła zaszyfrowaną wiadomość do serwera i odczytuje odpowiedź.
+//
+// Funkcja wczytuje lokalny klucz sesyjny AES, szyfruje treść wiadomości,
+// wysyła ją do serwera, a następnie odszyfrowuje otrzymaną odpowiedź.
+// Po zakończeniu wymiany usuwa lokalny klucz sesyjny, zamykając sesję.
+//
+// @param msg Jawna treść wiadomości wpisana przez użytkownika.
+// @return Odszyfrowana odpowiedź serwera lub błąd komunikacji.
 func (c *Client) ReadMessage(msg string) (string, error) {
-	sessionKey, err := identity2.LoadSessionKey(c.baseDir)
+	sessionKey, err := identity.LoadSessionKey(c.baseDir)
 	if err != nil {
 		return "", fmt.Errorf("client is not authenticated - missing session key: %w", err)
 	}
 
 	var encryptedBody string
-	encryptedBody, err = identity2.EncryptWithSessionKeyBase64([]byte(msg), sessionKey)
+	encryptedBody, err = identity.EncryptWithSessionKeyBase64([]byte(msg), sessionKey)
 	if err != nil {
 		return "", fmt.Errorf("encrypt message: %w", err)
 	}
 
-	req := protocol2.MessageRequest{
+	req := protocol.MessageRequest{
 		EncryptedBody: encryptedBody,
 	}
 
@@ -196,22 +242,26 @@ func (c *Client) ReadMessage(msg string) (string, error) {
 		return "", fmt.Errorf("server read message failed: status=%d body=%s", resp.StatusCode, string(body))
 	}
 
-	var response protocol2.MessageResponse
+	var response protocol.MessageResponse
 	if err = json.NewDecoder(resp.Body).Decode(&response); err != nil {
 		return "", fmt.Errorf("decode message response: %w", err)
 	}
 
 	var plaintext []byte
-	plaintext, err = identity2.DecryptWithSessionKeyBase64(response.EncryptedBody, sessionKey)
+	plaintext, err = identity.DecryptWithSessionKeyBase64(response.EncryptedBody, sessionKey)
 	if err != nil {
 		return "", fmt.Errorf("decrypt message response: %w", err)
 	}
 
-	_ = identity2.DeleteSessionKey(c.baseDir)
+	_ = identity.DeleteSessionKey(c.baseDir)
 
 	return string(plaintext), nil
 }
 
+// url buduje pełny adres HTTP na podstawie ścieżki endpointu.
+//
+// @param path Ścieżka endpointu rozpoczynająca się od znaku slash.
+// @return Pełny adres URL usługi.
 func (c *Client) url(path string) string {
 	return "http://" + c.addr + path
 }

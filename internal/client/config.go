@@ -5,8 +5,16 @@ import (
 	"os"
 )
 
+// defaultBaseDir określa domyślny katalog przechowywania lokalnych danych klienta.
+//
+// W katalogu tym zapisywane są między innymi identyfikator klienta,
+// klucze RSA, certyfikat X.509 oraz klucz sesyjny AES.
 const defaultBaseDir = "/tmp/scs/client"
 
+// Config przechowuje konfigurację aplikacji klienta.
+//
+// Struktura zawiera katalog bazowy lokalnej tożsamości, port lokalnego API,
+// adres usługi TTP oraz adres serwera aplikacyjnego.
 type Config struct {
 	BaseDir    string
 	Port       string
@@ -14,6 +22,12 @@ type Config struct {
 	ServerAddr string
 }
 
+// ConfigFromEnv wczytuje konfigurację klienta ze zmiennych środowiskowych.
+//
+// Funkcja wymaga ustawienia zmiennych PORT, TTP_ADDR oraz SERVER_ADDR.
+// Na ich podstawie budowana jest konfiguracja aplikacji klienta.
+//
+// @return Konfiguracja klienta lub błąd brakującej zmiennej środowiskowej.
 func ConfigFromEnv() (Config, error) {
 	port := os.Getenv("PORT")
 	if port == "" {

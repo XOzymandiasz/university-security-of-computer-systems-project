@@ -15,6 +15,14 @@ var (
 	certFileName = "cert.key"
 )
 
+// EnsureIdentity tworzy lokalną tożsamość aplikacji, jeśli jeszcze nie istnieje.
+//
+// Funkcja przygotowuje katalog bazowy oraz upewnia się, że istnieją dwa klucze RSA:
+// klucz uwierzytelniający, klucz szyfrujący oraz publiczny identyfikator aplikacji.
+// Jest wywoływana podczas inicjalizacji klienta albo serwera przed rejestracją w TTP.
+//
+// @param baseDir Katalog bazowy, w którym przechowywane są pliki tożsamości.
+// @return Błąd inicjalizacji tożsamości lub nil w przypadku powodzenia.
 func EnsureIdentity(baseDir string) error {
 	if err := os.MkdirAll(baseDir, 0700); err != nil {
 		return err
@@ -35,6 +43,14 @@ func EnsureIdentity(baseDir string) error {
 	return nil
 }
 
+// ensureId tworzy publiczny identyfikator aplikacji, jeśli plik jeszcze nie istnieje.
+//
+// Identyfikator jest generowany na podstawie losowych bajtów z kryptograficznie
+// bezpiecznego generatora, a następnie skracany funkcją SHA-256 i zapisywany
+// w postaci szesnastkowej.
+//
+// @param path Ścieżka do pliku, w którym ma znajdować się identyfikator.
+// @return Błąd zapisu lub nil w przypadku powodzenia.
 func ensureId(path string) error {
 	_, err := os.Stat(path)
 	if err == nil {

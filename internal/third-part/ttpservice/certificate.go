@@ -1,3 +1,7 @@
+// Package ttpservice zawiera logikę usługi Trusted Third Party.
+//
+// Pakiet odpowiada za tworzenie, parsowanie i walidację certyfikatów X.509
+// używanych podczas rejestracji oraz uwierzytelniania klienta i serwera.
 package ttpservice
 
 import (
@@ -10,10 +14,21 @@ import (
 	"encoding/base64"
 	"fmt"
 	"math/big"
-	"scs/internal/shared/identity"
 	"time"
+
+	"scs/internal/shared/identity"
 )
 
+// CreateCertificateBase64 tworzy certyfikat X.509 dla klienta lub serwera.
+//
+// Funkcja generuje certyfikat dla podanego identyfikatora i klucza publicznego.
+// Certyfikat jest podpisywany kluczem prywatnym TTP, dzięki czemu może być
+// później weryfikowany podczas procesu uwierzytelniania.
+//
+// @param subjectID Identyfikator podmiotu, dla którego tworzony jest certyfikat.
+// @param subjectPublicKey Klucz publiczny RSA podmiotu.
+// @param issuerPrivateKey Klucz prywatny RSA TTP używany do podpisania certyfikatu.
+// @return Certyfikat X.509 zakodowany w formacie Base64 lub błąd tworzenia.
 func CreateCertificateBase64(
 	subjectID string,
 	subjectPublicKey *rsa.PublicKey,
@@ -82,6 +97,13 @@ func CreateCertificateBase64(
 	return base64.StdEncoding.EncodeToString(certDER), nil
 }
 
+// ParseCertificateBase64 parsuje certyfikat X.509 zapisany w formacie Base64.
+//
+// Funkcja dekoduje dane Base64 do postaci DER, a następnie odczytuje certyfikat
+// przy użyciu standardowego parsera x509.
+//
+// @param encoded Certyfikat X.509 zakodowany w formacie Base64.
+// @return Struktura certyfikatu X.509 lub błąd parsowania.
 func ParseCertificateBase64(encoded string) (*x509.Certificate, error) {
 	certDER, err := base64.StdEncoding.DecodeString(encoded)
 	if err != nil {
@@ -91,6 +113,18 @@ func ParseCertificateBase64(encoded string) (*x509.Certificate, error) {
 	return x509.ParseCertificate(certDER)
 }
 
+// ValidateCertificateBase64 weryfikuje poprawność certyfikatu X.509.
+//
+// Funkcja sprawdza poprawność okresu ważności, zgodność identyfikatora,
+// zgodność klucza publicznego oraz podpis certyfikatu wykonany przez TTP.
+// Negatywny wynik walidacji oznacza, że certyfikat jest nieważny,
+// nie pasuje do deklarowanej tożsamości albo został podrobiony.
+//
+// @param certificateBase64 Certyfikat X.509 zakodowany w formacie Base64.
+// @param expectedSubjectID Oczekiwany identyfikator właściciela certyfikatu.
+// @param expectedPublicKeyBase64 Oczekiwany klucz publiczny właściciela w formacie Base64.
+// @param issuerPublicKey Publiczny klucz RSA TTP używany do weryfikacji podpisu.
+// @return Błąd walidacji certyfikatu lub nil w przypadku powodzenia.
 func ValidateCertificateBase64(
 	certificateBase64 string,
 	expectedSubjectID string,
