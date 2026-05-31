@@ -171,3 +171,131 @@ $login-hover-bg: #e6db74;
     box-shadow: 0 4px 12px rgba(253, 151, 31, 0.25);
   }
 }
+
+.mode-selector {
+  margin-top: 20px;
+  display: grid;
+  gap: 12px;
+}
+
+.mode-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 14px;
+  border-radius: 12px;
+  border: 1px solid $message-border-light;
+  background: $message-bg-dark;
+  color: $text-main;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    background 0.15s ease,
+    transform 0.15s ease;
+
+  &:hover {
+    transform: translateY(-1px);
+    border-color: $text-accent;
+    box-shadow: 0 0 0 3px rgba(166, 226, 46, 0.1);
+  }
+
+  input {
+    accent-color: $text-accent;
+  }
+}
+
+.active-secure {
+  border-color: $text-accent;
+  background: rgba(166, 226, 46, 0.08);
+  box-shadow: 0 0 0 3px rgba(166, 226, 46, 0.08);
+}
+
+.active-attack {
+  border-color: $error-color;
+  background: rgba(249, 38, 114, 0.08);
+  box-shadow: 0 0 0 3px rgba(249, 38, 114, 0.08);
+
+  input {
+    accent-color: $error-color;
+  }
+}
+
+.status-zone {
+  margin-top: 20px;
+
+  h4 {
+    margin: 0 0 8px;
+    color: $text-white;
+    font-size: 15px;
+  }
+}
+
+.status-box {
+  margin: 0;
+  padding: 13px 14px;
+  border-radius: 12px;
+  border: 1px solid $message-border-light;
+  background: darken($message-bg-dark, 2%);
+  color: $text-accent;
+  font-size: 14px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.attack-button {
+  background: $error-color;
+  box-shadow: 0 6px 18px rgba(249, 38, 114, 0.35);
+
+  &:hover:not(:disabled) {
+    background: lighten($error-color, 12%);
+    box-shadow: 0 8px 22px rgba(249, 38, 114, 0.35);
+  }
+
+  &:active:not(:disabled) {
+    box-shadow: 0 4px 12px rgba(249, 38, 114, 0.25);
+  }
+}
+
+.mitm-panel {
+  margin-top: 24px;
+  padding: 16px;
+  border-radius: 14px;
+  border: 1px solid $message-border-light;
+  background: darken($message-bg, 4%);
+}
+
+.mitm-panel h3 {
+  margin: 0;
+  color: $text-white;
+  font-size: 19px;
+}
+
+.mitm-section {
+  margin-top: 16px;
+
+  h4 {
+    margin: 0 0 8px;
+    color: $text-accent;
+    font-size: 14px;
+  }
+
+  pre {
+    min-height: 56px;
+    max-height: 220px;
+    margin: 0;
+    padding: 14px;
+    border-radius: 12px;
+    border: 1px solid $message-border;
+    background: #11120f;
+    color: $text-main;
+    font-size: 13px;
+    line-height: 1.45;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    overflow: auto;
+  }
+}

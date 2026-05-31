@@ -4,6 +4,33 @@
     <p>Enter a message and send it to the server.</p>
   </div>
 
+  <div class="mode-selector">
+    <label class="mode-label" [class.active-secure]="protocolMode() === 'secure'">
+      <input
+        type="radio"
+        name="protocolMode"
+        [checked]="protocolMode() === 'secure'"
+        (change)="setSecureMode()"
+      />
+      Secure mode
+    </label>
+
+    <label class="mode-label" [class.active-attack]="protocolMode() === 'mitm'">
+      <input
+        type="radio"
+        name="protocolMode"
+        [checked]="protocolMode() === 'mitm'"
+        (change)="setMitmMode()"
+      />
+      MITM attack simulation
+    </label>
+  </div>
+
+  <div class="status-zone">
+    <h4>Status</h4>
+    <p class="status-box">{{ status() }}</p>
+  </div>
+
   <button
     class="login-button"
     type="button"
@@ -31,8 +58,9 @@
       class="message-button"
       type="submit"
       [disabled]="loading() || !messageText().trim()"
+      [class.attack-button]="protocolMode() === 'mitm'"
     >
-      Send message
+      {{ protocolMode() === 'mitm' ? 'Execute MITM simulation' : 'Send message' }}
     </button>
   </form>
 
@@ -47,4 +75,20 @@
       <p class="message-empty">No response yet.</p>
     }
   </div>
+
+  @if (protocolMode() === 'mitm') {
+    <div class="mitm-panel">
+      <h3>MITM demonstration panel</h3>
+
+      <div class="mitm-section">
+        <h4>1. Payload sent by frontend to client</h4>
+        <pre>{{ frontendPayloadLog() || 'No frontend payload yet.' }}</pre>
+      </div>
+
+      <div class="mitm-section">
+        <h4>2. Server response / security result</h4>
+        <pre>{{ serverResponseLog() || 'No server response yet.' }}</pre>
+      </div>
+    </div>
+  }
 </div>

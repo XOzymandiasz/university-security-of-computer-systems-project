@@ -1,0 +1,1 @@
+docker run --rm -it --net container:scs-server nicolaka/netshoot ngrep -W byline -d any "POST /api/message" "tcp port 8080"

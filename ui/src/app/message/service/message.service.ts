@@ -1,9 +1,8 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import {MessageResponseModel} from '../model/messageResponse.model';
-import {MessageRequestModel} from '../model/messageRequest.model';
-
+import { MessageResponseModel } from '../model/messageResponse.model';
+import { MessageRequestModel } from '../model/messageRequest.model';
 
 @Injectable({
   providedIn: 'root',
@@ -17,5 +16,9 @@ export class MessageService {
 
   sendMessage(request: MessageRequestModel): Observable<MessageResponseModel> {
     return this.http.post<MessageResponseModel>('/api/message', request);
+  }
+
+  sendTamperedMessage(request: MessageRequestModel): Observable<MessageResponseModel> {
+    return this.http.post<MessageResponseModel>('/api/debug/message-tampered', request);
   }
 }
